@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Inicio from "../pages/Inicio";
 import RegistroArtesano from "../pages/RegistroArtesano";
 import Login from "../pages/Login";
 import Ferias from "../pages/Ferias";
@@ -13,7 +14,7 @@ function AppRoutes() {
             <Header />
 
             <Routes>
-                <Route path="/" element={<h2>Bienvenido a SGFA</h2>} />
+                <Route path="/" element={<Inicio />} />
                 <Route path="/registro" element={<RegistroArtesano />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/ferias" element={<Ferias />} />
