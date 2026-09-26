@@ -8,6 +8,13 @@ async function manejarRespuesta(response) {
     return data;
 }
 
+function headersConToken(token) {
+    return {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+    };
+}
+
 export async function registrarArtesano(datosArtesano) {
     const response = await fetch(`${BASE_URL}/artesanos`, {
         method: "POST",
@@ -36,5 +43,23 @@ export async function consultarEdicionesFeria(idFeria) {
         ? `${BASE_URL}/edicionesferia?idFeria=${idFeria}`
         : `${BASE_URL}/edicionesferia`;
     const response = await fetch(url);
+    return manejarRespuesta(response);
+}
+
+export async function crearFeria(nombreFeria, idAdmin, token) {
+    const response = await fetch(`${BASE_URL}/ferias`, {
+        method: "POST",
+        headers: headersConToken(token),
+        body: JSON.stringify({ nombreFeria, idAdmin }),
+    });
+    return manejarRespuesta(response);
+}
+
+export async function crearEdicionFeria(datosEdicion, token) {
+    const response = await fetch(`${BASE_URL}/edicionesferia`, {
+        method: "POST",
+        headers: headersConToken(token),
+        body: JSON.stringify(datosEdicion),
+    });
     return manejarRespuesta(response);
 }
