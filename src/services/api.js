@@ -63,3 +63,39 @@ export async function crearEdicionFeria(datosEdicion, token) {
     });
     return manejarRespuesta(response);
 }
+
+export async function crearProducto(datosProducto, token) {
+    const response = await fetch(`${BASE_URL}/productos`, {
+        method: "POST",
+        headers: headersConToken(token),
+        body: JSON.stringify(datosProducto),
+    });
+    return manejarRespuesta(response);
+}
+
+export async function consultarMisProductos(token) {
+    const response = await fetch(`${BASE_URL}/productos`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    return manejarRespuesta(response);
+}
+
+export async function actualizarProducto(idProducto, datosProducto, token) {
+    const response = await fetch(`${BASE_URL}/productos/${idProducto}`, {
+        method: "PUT",
+        headers: headersConToken(token),
+        body: JSON.stringify(datosProducto),
+    });
+    return manejarRespuesta(response);
+}
+
+export async function eliminarProducto(idProducto, token) {
+    const response = await fetch(`${BASE_URL}/productos/${idProducto}`, {
+        method: "DELETE",
+        headers: headersConToken(token),
+    });
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "No se pudo eliminar el producto.");
+    }
+}
