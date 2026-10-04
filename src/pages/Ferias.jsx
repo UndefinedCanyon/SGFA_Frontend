@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
-import { consultarFerias, consultarEdicionesFeria } from "../services/api";
+import { consultarFerias, consultarEdicionesFeria, solicitarParticipacion } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 function Ferias() {
+    const { usuario } = useAuth();
+
     const [ferias, setFerias] = useState([]);
     const [feriaSeleccionada, setFeriaSeleccionada] = useState(null);
     const [ediciones, setEdiciones] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [cargandoEdiciones, setCargandoEdiciones] = useState(false);
     const [error, setError] = useState(null);
+    const [mensaje, setMensaje] = useState(null);
+    const [solicitandoId, setSolicitandoId] = useState(null);
 
     useEffect(() => {
         async function cargarFerias() {
@@ -27,6 +32,8 @@ function Ferias() {
     async function verEdiciones(feria) {
         setFeriaSeleccionada(feria);
         setEdiciones([]);
+        setMensaje(null);
+        setError(null);
         setCargandoEdiciones(true);
         try {
             const datos = await consultarEdicionesFeria(feria.id);
@@ -35,6 +42,20 @@ function Ferias() {
             setError(err.message);
         } finally {
             setCargandoEdiciones(false);
+        }
+    }
+
+    async function manejarSolicitud(idEdicionFeria) {
+        setMensaje(null);
+        setError(null);
+        setSolicitandoId(idEdicionFeria);
+        try {
+            await solicitarParticipacion(idEdicionFeria, usuario.token);
+            setMensaje("Solicitud enviada correctamente. Queda pendiente de revisión.");
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSolicitandoId(null);
         }
     }
 
@@ -60,6 +81,9 @@ function Ferias() {
 
             {error && (
                 <p className="text-sm text-red-700 bg-red-50 rounded-lg p-3 mb-6">{error}</p>
+            )}
+            {mensaje && (
+                <p className="text-sm text-green-700 bg-green-50 rounded-lg p-3 mb-6">{mensaje}</p>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -119,7 +143,17 @@ function Ferias() {
                                     {formatearFecha(edicion.fechaInicio)} — {formatearFecha(edicion.fechaFin)}
                                 </p>
                                 <p className="text-sm text-gray-500">Lugar</p>
-                                <p className="font-medium text-gray-800">ID {edicion.idLugar}</p>
+                                <p className="font-medium text-gray-800 mb-3">ID {edicion.idLugar}</p>
+
+                                {usuario?.rol === "ARTESANO" && (
+                                    <button
+                                        onClick={() => manejarSolicitud(edicion.id)}
+                                        disabled={solicitandoId === edicion.id}
+                                        className="text-sm bg-green-600 text-white px-4 py-1.5 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                                    >
+                                        {solicitandoId === edicion.id ? "Enviando..." : "Solicitar participación"}
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>

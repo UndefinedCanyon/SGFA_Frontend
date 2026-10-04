@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { consultarMisProductos, crearProducto, actualizarProducto, eliminarProducto } from "../services/api";
+import {
+    consultarMisProductos, crearProducto, actualizarProducto, eliminarProducto,
+    consultarMisSolicitudes,
+} from "../services/api";
 
 function PanelArtesano() {
     const { usuario } = useAuth();
 
     const [productos, setProductos] = useState([]);
-    const [cargando, setCargando] = useState(true);
+    const [cargandoProductos, setCargandoProductos] = useState(true);
     const [error, setError] = useState(null);
 
     const [formulario, setFormulario] = useState({ nombre: "", precio: "", cantidad: "" });
     const [editandoId, setEditandoId] = useState(null);
     const [guardando, setGuardando] = useState(false);
+
+    const [solicitudes, setSolicitudes] = useState([]);
+    const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
 
     async function cargarProductos() {
         try {
@@ -20,12 +26,24 @@ function PanelArtesano() {
         } catch (err) {
             setError(err.message);
         } finally {
-            setCargando(false);
+            setCargandoProductos(false);
+        }
+    }
+
+    async function cargarSolicitudes() {
+        try {
+            const datos = await consultarMisSolicitudes(usuario.token);
+            setSolicitudes(datos);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setCargandoSolicitudes(false);
         }
     }
 
     useEffect(() => {
         cargarProductos();
+        cargarSolicitudes();
     }, []);
 
     function manejarCambio(evento) {
@@ -83,6 +101,12 @@ function PanelArtesano() {
         }
     }
 
+    function colorEstado(estado) {
+        if (estado === "APROBADA") return "bg-green-100 text-green-800";
+        if (estado === "RECHAZADA") return "bg-red-100 text-red-800";
+        return "bg-amber-100 text-amber-800";
+    }
+
     const campoClase =
         "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500";
 
@@ -94,6 +118,32 @@ function PanelArtesano() {
             {error && (
                 <p className="text-sm text-red-700 bg-red-50 rounded-lg p-3 mb-6">{error}</p>
             )}
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis solicitudes de participación</h3>
+
+                {cargandoSolicitudes && <p className="text-gray-500 text-sm">Cargando...</p>}
+
+                {!cargandoSolicitudes && solicitudes.length === 0 && (
+                    <p className="text-gray-500 text-sm">Aún no has solicitado participar en ninguna feria.</p>
+                )}
+
+                <div className="flex flex-col gap-2">
+                    {solicitudes.map((solicitud) => (
+                        <div
+                            key={solicitud.id}
+                            className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-2"
+                        >
+                            <span className="text-sm text-gray-600">
+                                Edición #{solicitud.idEdicionFeria} — solicitada el {solicitud.fechaInscripcion}
+                            </span>
+                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${colorEstado(solicitud.estado)}`}>
+                                {solicitud.estado}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -160,9 +210,9 @@ function PanelArtesano() {
 
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis productos</h3>
 
-            {cargando && <p className="text-gray-500 text-sm">Cargando productos...</p>}
+            {cargandoProductos && <p className="text-gray-500 text-sm">Cargando productos...</p>}
 
-            {!cargando && productos.length === 0 && (
+            {!cargandoProductos && productos.length === 0 && (
                 <p className="text-gray-500 text-sm">Aún no has registrado productos.</p>
             )}
 

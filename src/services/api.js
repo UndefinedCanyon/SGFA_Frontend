@@ -99,3 +99,42 @@ export async function eliminarProducto(idProducto, token) {
         throw new Error(data.error || "No se pudo eliminar el producto.");
     }
 }
+
+export async function solicitarParticipacion(idEdicionFeria, token) {
+    const response = await fetch(`${BASE_URL}/inscripciones`, {
+        method: "POST",
+        headers: headersConToken(token),
+        body: JSON.stringify({ idEdicionFeria }),
+    });
+    return manejarRespuesta(response);
+}
+
+export async function consultarMisSolicitudes(token) {
+    const response = await fetch(`${BASE_URL}/inscripciones/mias`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    return manejarRespuesta(response);
+}
+
+export async function consultarTodasLasSolicitudes(token) {
+    const response = await fetch(`${BASE_URL}/inscripciones`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    return manejarRespuesta(response);
+}
+
+export async function aprobarSolicitud(idInscripcion, token) {
+    const response = await fetch(`${BASE_URL}/inscripciones/${idInscripcion}/aprobar`, {
+        method: "PUT",
+        headers: headersConToken(token),
+    });
+    return manejarRespuesta(response);
+}
+
+export async function rechazarSolicitud(idInscripcion, token) {
+    const response = await fetch(`${BASE_URL}/inscripciones/${idInscripcion}/rechazar`, {
+        method: "PUT",
+        headers: headersConToken(token),
+    });
+    return manejarRespuesta(response);
+}
