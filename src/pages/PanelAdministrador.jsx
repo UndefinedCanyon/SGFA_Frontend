@@ -1,3 +1,5 @@
+import GestionLugares from "../components/GestionLugares";
+import GestionEdiciones from "../components/GestionEdiciones";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -12,7 +14,8 @@ function PanelAdministrador() {
     const [mensaje, setMensaje] = useState(null);
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
-
+    
+    const [versionDatos, setVersionDatos] = useState(0);
     const [solicitudes, setSolicitudes] = useState([]);
     const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
     const [procesandoId, setProcesandoId] = useState(null);
@@ -64,6 +67,7 @@ function PanelAdministrador() {
             setMensaje(`Feria "${feriaCreada.nombreFeria}" creada con éxito.`);
             setNombreFeria("");
             await cargarGestion();
+            setVersionDatos((v) => v + 1);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -116,6 +120,7 @@ function PanelAdministrador() {
         try {
             await cambiarEstadoFeria(idFeria, nuevoEstado, usuario.token);
             await cargarGestion();
+            setVersionDatos((v) => v + 1);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -272,7 +277,8 @@ function PanelAdministrador() {
                     ))}
                 </div>
             </div>
-
+            <GestionLugares onLugarCreado={() => setVersionDatos((v) => v + 1)} />
+            <GestionEdiciones version={versionDatos} />
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 max-w-md">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear nueva feria</h3>
 

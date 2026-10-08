@@ -176,3 +176,36 @@ export async function cambiarEstadoFeria(idFeria, activo, token) {
         throw new Error(data.error || "No se pudo cambiar el estado de la feria.");
     }
 }
+
+export async function consultarLugares() {
+    const response = await fetch(`${BASE_URL}/lugares`);
+    return manejarRespuesta(response);
+}
+
+export async function crearLugar(nombre, direccion, token) {
+    const response = await fetch(`${BASE_URL}/lugares`, {
+        method: "POST",
+        headers: headersConToken(token),
+        body: JSON.stringify({ nombre, direccion }),
+    });
+    return manejarRespuesta(response);
+}
+
+export async function consultarTodasLasEdiciones(token) {
+    const response = await fetch(`${BASE_URL}/edicionesferia/todas`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    return manejarRespuesta(response);
+}
+
+export async function cambiarEstadoEdicion(idEdicion, activo, token) {
+    const response = await fetch(`${BASE_URL}/edicionesferia/${idEdicion}/estado`, {
+        method: "PUT",
+        headers: headersConToken(token),
+        body: JSON.stringify({ activo }),
+    });
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "No se pudo cambiar el estado de la edición.");
+    }
+}
