@@ -138,3 +138,41 @@ export async function rechazarSolicitud(idInscripcion, token) {
     });
     return manejarRespuesta(response);
 }
+
+export async function consultarTodosLosArtesanos(token) {
+    const response = await fetch(`${BASE_URL}/artesanos`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    return manejarRespuesta(response);
+}
+
+export async function consultarTodasLasFerias(token) {
+    const response = await fetch(`${BASE_URL}/ferias/todas`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    return manejarRespuesta(response);
+}
+
+export async function cambiarEstadoArtesano(idArtesano, activo, token) {
+    const response = await fetch(`${BASE_URL}/artesanos/${idArtesano}/estado`, {
+        method: "PUT",
+        headers: headersConToken(token),
+        body: JSON.stringify({ activo }),
+    });
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "No se pudo cambiar el estado del artesano.");
+    }
+}
+
+export async function cambiarEstadoFeria(idFeria, activo, token) {
+    const response = await fetch(`${BASE_URL}/ferias/${idFeria}/estado`, {
+        method: "PUT",
+        headers: headersConToken(token),
+        body: JSON.stringify({ activo }),
+    });
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "No se pudo cambiar el estado de la feria.");
+    }
+}

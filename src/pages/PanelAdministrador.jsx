@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
     crearFeria, consultarTodasLasSolicitudes, aprobarSolicitud, rechazarSolicitud,
+    consultarTodosLosArtesanos, consultarTodasLasFerias, cambiarEstadoArtesano, cambiarEstadoFeria,
 } from "../services/api";
 
 function PanelAdministrador() {
@@ -16,6 +17,11 @@ function PanelAdministrador() {
     const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
     const [procesandoId, setProcesandoId] = useState(null);
 
+    const [artesanos, setArtesanos] = useState([]);
+    const [ferias, setFerias] = useState([]);
+    const [cargandoGestion, setCargandoGestion] = useState(true);
+    const [cambiandoId, setCambiandoId] = useState(null);
+
     async function cargarSolicitudes() {
         try {
             const datos = await consultarTodasLasSolicitudes(usuario.token);
@@ -27,8 +33,24 @@ function PanelAdministrador() {
         }
     }
 
+    async function cargarGestion() {
+        try {
+            const [datosArtesanos, datosFerias] = await Promise.all([
+                consultarTodosLosArtesanos(usuario.token),
+                consultarTodasLasFerias(usuario.token),
+            ]);
+            setArtesanos(datosArtesanos);
+            setFerias(datosFerias);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setCargandoGestion(false);
+        }
+    }
+
     useEffect(() => {
         cargarSolicitudes();
+        cargarGestion();
     }, []);
 
     async function manejarEnvio(evento) {
@@ -41,6 +63,7 @@ function PanelAdministrador() {
             const feriaCreada = await crearFeria(nombreFeria, usuario.id, usuario.token);
             setMensaje(`Feria "${feriaCreada.nombreFeria}" creada con éxito.`);
             setNombreFeria("");
+            await cargarGestion();
         } catch (err) {
             setError(err.message);
         } finally {
@@ -71,6 +94,32 @@ function PanelAdministrador() {
             setError(err.message);
         } finally {
             setProcesandoId(null);
+        }
+    }
+
+    async function manejarEstadoArtesano(idArtesano, nuevoEstado) {
+        setError(null);
+        setCambiandoId(`artesano-${idArtesano}`);
+        try {
+            await cambiarEstadoArtesano(idArtesano, nuevoEstado, usuario.token);
+            await cargarGestion();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setCambiandoId(null);
+        }
+    }
+
+    async function manejarEstadoFeria(idFeria, nuevoEstado) {
+        setError(null);
+        setCambiandoId(`feria-${idFeria}`);
+        try {
+            await cambiarEstadoFeria(idFeria, nuevoEstado, usuario.token);
+            await cargarGestion();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setCambiandoId(null);
         }
     }
 
@@ -152,6 +201,76 @@ function PanelAdministrador() {
                         </div>
                     </>
                 )}
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Ferias</h3>
+
+                {cargandoGestion && <p className="text-gray-500 text-sm">Cargando...</p>}
+
+                <div className="flex flex-col gap-2">
+                    {ferias.map((feria) => (
+                        <div
+                            key={feria.id}
+                            className={`flex items-center justify-between border rounded-lg px-4 py-3 ${
+                                feria.activo ? "border-gray-100" : "border-red-100 bg-red-50"
+                            }`}
+                        >
+                            <span className="text-sm text-gray-700">
+                                {feria.nombreFeria}{" "}
+                                {!feria.activo && (
+                                    <span className="text-xs text-red-600 font-medium">(inactiva)</span>
+                                )}
+                            </span>
+                            <button
+                                onClick={() => manejarEstadoFeria(feria.id, !feria.activo)}
+                                disabled={cambiandoId === `feria-${feria.id}`}
+                                className={`text-sm px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                                    feria.activo
+                                        ? "bg-red-600 text-white hover:bg-red-700"
+                                        : "bg-green-600 text-white hover:bg-green-700"
+                                }`}
+                            >
+                                {feria.activo ? "Desactivar" : "Reactivar"}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Artesanos</h3>
+
+                {cargandoGestion && <p className="text-gray-500 text-sm">Cargando...</p>}
+
+                <div className="flex flex-col gap-2">
+                    {artesanos.map((artesano) => (
+                        <div
+                            key={artesano.id}
+                            className={`flex items-center justify-between border rounded-lg px-4 py-3 ${
+                                artesano.activo ? "border-gray-100" : "border-red-100 bg-red-50"
+                            }`}
+                        >
+                            <span className="text-sm text-gray-700">
+                                {artesano.nombreEmprendimiento} — {artesano.nombre}{" "}
+                                {!artesano.activo && (
+                                    <span className="text-xs text-red-600 font-medium">(inactivo)</span>
+                                )}
+                            </span>
+                            <button
+                                onClick={() => manejarEstadoArtesano(artesano.id, !artesano.activo)}
+                                disabled={cambiandoId === `artesano-${artesano.id}`}
+                                className={`text-sm px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                                    artesano.activo
+                                        ? "bg-red-600 text-white hover:bg-red-700"
+                                        : "bg-green-600 text-white hover:bg-green-700"
+                                }`}
+                            >
+                                {artesano.activo ? "Desactivar" : "Reactivar"}
+                            </button>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 max-w-md">
