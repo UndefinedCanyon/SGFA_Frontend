@@ -209,3 +209,8 @@ export async function cambiarEstadoEdicion(idEdicion, activo, token) {
         throw new Error(data.error || "No se pudo cambiar el estado de la edición.");
     }
 }
+
+export async function consultarParticipantes(idEdicion) {
+    const response = await fetch(`${BASE_URL}/edicionesferia/${idEdicion}/participantes`);
+    return manejarRespuesta(response);
+}
