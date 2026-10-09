@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
     consultarMisProductos, crearProducto, actualizarProducto, eliminarProducto,
-    consultarMisSolicitudes,
+    consultarMisSolicitudes, consultarFerias, consultarEdicionesFeria, consultarLugares,
 } from "../services/api";
+import { describirEdicion, formatearFecha } from "../utils/helpers";
 
 function PanelArtesano() {
     const { usuario } = useAuth();
@@ -18,6 +19,10 @@ function PanelArtesano() {
 
     const [solicitudes, setSolicitudes] = useState([]);
     const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
+
+    const [ferias, setFerias] = useState([]);
+    const [ediciones, setEdiciones] = useState([]);
+    const [lugares, setLugares] = useState([]);
 
     async function cargarProductos() {
         try {
@@ -41,9 +46,25 @@ function PanelArtesano() {
         }
     }
 
+    async function cargarReferencias() {
+        try {
+            const [datosFerias, datosEdiciones, datosLugares] = await Promise.all([
+                consultarFerias(),
+                consultarEdicionesFeria(),
+                consultarLugares(),
+            ]);
+            setFerias(datosFerias);
+            setEdiciones(datosEdiciones);
+            setLugares(datosLugares);
+        } catch (err) {
+            setError(err.message);
+        }
+    }
+
     useEffect(() => {
         cargarProductos();
         cargarSolicitudes();
+        cargarReferencias();
     }, []);
 
     function manejarCambio(evento) {
@@ -132,12 +153,17 @@ function PanelArtesano() {
                     {solicitudes.map((solicitud) => (
                         <div
                             key={solicitud.id}
-                            className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-2"
+                            className="flex items-center justify-between gap-4 border border-gray-100 rounded-lg px-4 py-3"
                         >
-                            <span className="text-sm text-gray-600">
-                                Edición #{solicitud.idEdicionFeria} — solicitada el {solicitud.fechaInscripcion}
-                            </span>
-                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${colorEstado(solicitud.estado)}`}>
+                            <div>
+                                <p className="text-sm text-gray-700">
+                                    {describirEdicion(solicitud.idEdicionFeria, ediciones, ferias, lugares)}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                    Solicitada el {formatearFecha(solicitud.fechaInscripcion)}
+                                </p>
+                            </div>
+                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${colorEstado(solicitud.estado)}`}>
                                 {solicitud.estado}
                             </span>
                         </div>

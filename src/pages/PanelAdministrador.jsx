@@ -1,11 +1,13 @@
-import GestionLugares from "../components/GestionLugares";
-import GestionEdiciones from "../components/GestionEdiciones";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
     crearFeria, consultarTodasLasSolicitudes, aprobarSolicitud, rechazarSolicitud,
     consultarTodosLosArtesanos, consultarTodasLasFerias, cambiarEstadoArtesano, cambiarEstadoFeria,
+    consultarLugares, consultarTodasLasEdiciones,
 } from "../services/api";
+import { describirEdicion } from "../utils/helpers";
+import GestionLugares from "../components/GestionLugares";
+import GestionEdiciones from "../components/GestionEdiciones";
 
 function PanelAdministrador() {
     const { usuario } = useAuth();
@@ -14,14 +16,16 @@ function PanelAdministrador() {
     const [mensaje, setMensaje] = useState(null);
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
-    
     const [versionDatos, setVersionDatos] = useState(0);
+
     const [solicitudes, setSolicitudes] = useState([]);
     const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
     const [procesandoId, setProcesandoId] = useState(null);
 
     const [artesanos, setArtesanos] = useState([]);
     const [ferias, setFerias] = useState([]);
+    const [lugares, setLugares] = useState([]);
+    const [ediciones, setEdiciones] = useState([]);
     const [cargandoGestion, setCargandoGestion] = useState(true);
     const [cambiandoId, setCambiandoId] = useState(null);
 
@@ -38,12 +42,16 @@ function PanelAdministrador() {
 
     async function cargarGestion() {
         try {
-            const [datosArtesanos, datosFerias] = await Promise.all([
+            const [datosArtesanos, datosFerias, datosLugares, datosEdiciones] = await Promise.all([
                 consultarTodosLosArtesanos(usuario.token),
                 consultarTodasLasFerias(usuario.token),
+                consultarLugares(),
+                consultarTodasLasEdiciones(usuario.token),
             ]);
             setArtesanos(datosArtesanos);
             setFerias(datosFerias);
+            setLugares(datosLugares);
+            setEdiciones(datosEdiciones);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -134,6 +142,15 @@ function PanelAdministrador() {
         return "bg-amber-100 text-amber-800";
     }
 
+    function nombreArtesano(id) {
+        const artesano = artesanos.find((a) => a.id === id);
+        return artesano ? `${artesano.nombreEmprendimiento} (${artesano.nombre})` : `Artesano #${id}`;
+    }
+
+    function detalleSolicitud(solicitud) {
+        return describirEdicion(solicitud.idEdicionFeria, ediciones, ferias, lugares);
+    }
+
     const pendientes = solicitudes.filter((s) => s.estado === "PENDIENTE");
     const resueltas = solicitudes.filter((s) => s.estado !== "PENDIENTE");
 
@@ -161,11 +178,14 @@ function PanelAdministrador() {
                     {pendientes.map((solicitud) => (
                         <div
                             key={solicitud.id}
-                            className="flex items-center justify-between border border-amber-100 bg-amber-50 rounded-lg px-4 py-3"
+                            className="flex items-center justify-between gap-4 border border-amber-100 bg-amber-50 rounded-lg px-4 py-3"
                         >
-                            <span className="text-sm text-gray-700">
-                                Artesano #{solicitud.idArtesano} — Edición #{solicitud.idEdicionFeria}
-                            </span>
+                            <div>
+                                <p className="text-sm font-medium text-gray-700">
+                                    {nombreArtesano(solicitud.idArtesano)}
+                                </p>
+                                <p className="text-xs text-gray-500">{detalleSolicitud(solicitud)}</p>
+                            </div>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => manejarAprobar(solicitud.id)}
@@ -193,12 +213,15 @@ function PanelAdministrador() {
                             {resueltas.map((solicitud) => (
                                 <div
                                     key={solicitud.id}
-                                    className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-2"
+                                    className="flex items-center justify-between gap-4 border border-gray-100 rounded-lg px-4 py-2"
                                 >
-                                    <span className="text-sm text-gray-500">
-                                        Artesano #{solicitud.idArtesano} — Edición #{solicitud.idEdicionFeria}
-                                    </span>
-                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${colorEstado(solicitud.estado)}`}>
+                                    <div>
+                                        <p className="text-sm text-gray-600">
+                                            {nombreArtesano(solicitud.idArtesano)}
+                                        </p>
+                                        <p className="text-xs text-gray-400">{detalleSolicitud(solicitud)}</p>
+                                    </div>
+                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${colorEstado(solicitud.estado)}`}>
                                         {solicitud.estado}
                                     </span>
                                 </div>
@@ -277,8 +300,10 @@ function PanelAdministrador() {
                     ))}
                 </div>
             </div>
+
             <GestionLugares onLugarCreado={() => setVersionDatos((v) => v + 1)} />
             <GestionEdiciones version={versionDatos} />
+
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 max-w-md">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear nueva feria</h3>
 
