@@ -214,3 +214,19 @@ export async function consultarParticipantes(idEdicion) {
     const response = await fetch(`${BASE_URL}/edicionesferia/${idEdicion}/participantes`);
     return manejarRespuesta(response);
 }
+
+export async function consultarMiPerfil(token) {
+    const response = await fetch(`${BASE_URL}/artesanos/perfil`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    return manejarRespuesta(response);
+}
+
+export async function actualizarMiPerfil(datos, token) {
+    const response = await fetch(`${BASE_URL}/artesanos/perfil`, {
+        method: "PUT",
+        headers: headersConToken(token),
+        body: JSON.stringify(datos),
+    });
+    return manejarRespuesta(response);
+}

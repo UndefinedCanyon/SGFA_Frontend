@@ -1,3 +1,4 @@
+import MiPerfil from "../components/MiPerfil";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -139,7 +140,7 @@ function PanelArtesano() {
             {error && (
                 <p className="text-sm text-red-700 bg-red-50 rounded-lg p-3 mb-6">{error}</p>
             )}
-
+            <MiPerfil />
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis solicitudes de participación</h3>
 

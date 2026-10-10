@@ -15,13 +15,19 @@ export function AuthProvider({ children }) {
         localStorage.setItem("sgfa_usuario", JSON.stringify(sesion));
     }
 
+    function actualizarUsuario(cambios) {
+        const actualizado = { ...usuario, ...cambios };
+        setUsuario(actualizado);
+        localStorage.setItem("sgfa_usuario", JSON.stringify(actualizado));
+    }
+
     function cerrarSesion() {
         setUsuario(null);
         localStorage.removeItem("sgfa_usuario");
     }
 
     return (
-        <AuthContext.Provider value={{ usuario, iniciarSesionContexto, cerrarSesion }}>
+        <AuthContext.Provider value={{ usuario, iniciarSesionContexto, actualizarUsuario, cerrarSesion }}>
             {children}
         </AuthContext.Provider>
     );
