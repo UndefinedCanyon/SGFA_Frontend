@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
-    crearFeria, consultarTodasLasSolicitudes, aprobarSolicitud, rechazarSolicitud,
+    crearFeria, actualizarFeria, consultarTodasLasSolicitudes, aprobarSolicitud, rechazarSolicitud,
     consultarTodosLosArtesanos, consultarTodasLasFerias, cambiarEstadoArtesano, cambiarEstadoFeria,
     consultarLugares, consultarTodasLasEdiciones,
 } from "../services/api";
@@ -28,6 +28,9 @@ function PanelAdministrador() {
     const [ediciones, setEdiciones] = useState([]);
     const [cargandoGestion, setCargandoGestion] = useState(true);
     const [cambiandoId, setCambiandoId] = useState(null);
+
+    const [feriaEditandoId, setFeriaEditandoId] = useState(null);
+    const [nombreEditado, setNombreEditado] = useState("");
 
     async function cargarSolicitudes() {
         try {
@@ -127,6 +130,31 @@ function PanelAdministrador() {
         setCambiandoId(`feria-${idFeria}`);
         try {
             await cambiarEstadoFeria(idFeria, nuevoEstado, usuario.token);
+            await cargarGestion();
+            setVersionDatos((v) => v + 1);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setCambiandoId(null);
+        }
+    }
+
+    function iniciarEdicionFeria(feria) {
+        setFeriaEditandoId(feria.id);
+        setNombreEditado(feria.nombreFeria);
+    }
+
+    function cancelarEdicionFeria() {
+        setFeriaEditandoId(null);
+        setNombreEditado("");
+    }
+
+    async function guardarNombreFeria(idFeria) {
+        setError(null);
+        setCambiandoId(`feria-${idFeria}`);
+        try {
+            await actualizarFeria(idFeria, nombreEditado, usuario.token);
+            cancelarEdicionFeria();
             await cargarGestion();
             setVersionDatos((v) => v + 1);
         } catch (err) {
@@ -240,27 +268,70 @@ function PanelAdministrador() {
                     {ferias.map((feria) => (
                         <div
                             key={feria.id}
-                            className={`flex items-center justify-between border rounded-lg px-4 py-3 ${
+                            className={`flex items-center justify-between gap-4 border rounded-lg px-4 py-3 ${
                                 feria.activo ? "border-gray-100" : "border-red-100 bg-red-50"
                             }`}
                         >
-                            <span className="text-sm text-gray-700">
-                                {feria.nombreFeria}{" "}
-                                {!feria.activo && (
-                                    <span className="text-xs text-red-600 font-medium">(inactiva)</span>
-                                )}
-                            </span>
-                            <button
-                                onClick={() => manejarEstadoFeria(feria.id, !feria.activo)}
-                                disabled={cambiandoId === `feria-${feria.id}`}
-                                className={`text-sm px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
-                                    feria.activo
-                                        ? "bg-red-600 text-white hover:bg-red-700"
-                                        : "bg-green-600 text-white hover:bg-green-700"
-                                }`}
-                            >
-                                {feria.activo ? "Desactivar" : "Reactivar"}
-                            </button>
+                            {feriaEditandoId === feria.id ? (
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        guardarNombreFeria(feria.id);
+                                    }}
+                                    className="flex flex-1 items-center gap-2"
+                                >
+                                    <input
+                                        type="text"
+                                        value={nombreEditado}
+                                        onChange={(e) => setNombreEditado(e.target.value)}
+                                        required
+                                        autoFocus
+                                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={cambiandoId === `feria-${feria.id}`}
+                                        className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                                    >
+                                        Guardar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={cancelarEdicionFeria}
+                                        className="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </form>
+                            ) : (
+                                <>
+                                    <span className="text-sm text-gray-700">
+                                        {feria.nombreFeria}{" "}
+                                        {!feria.activo && (
+                                            <span className="text-xs text-red-600 font-medium">(inactiva)</span>
+                                        )}
+                                    </span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => iniciarEdicionFeria(feria)}
+                                            className="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            onClick={() => manejarEstadoFeria(feria.id, !feria.activo)}
+                                            disabled={cambiandoId === `feria-${feria.id}`}
+                                            className={`text-sm px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                                                feria.activo
+                                                    ? "bg-red-600 text-white hover:bg-red-700"
+                                                    : "bg-green-600 text-white hover:bg-green-700"
+                                            }`}
+                                        >
+                                            {feria.activo ? "Desactivar" : "Reactivar"}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))}
                 </div>

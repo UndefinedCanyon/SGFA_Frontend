@@ -230,3 +230,12 @@ export async function actualizarMiPerfil(datos, token) {
     });
     return manejarRespuesta(response);
 }
+
+export async function actualizarFeria(idFeria, nombreFeria, token) {
+    const response = await fetch(`${BASE_URL}/ferias/${idFeria}`, {
+        method: "PUT",
+        headers: headersConToken(token),
+        body: JSON.stringify({ nombreFeria }),
+    });
+    return manejarRespuesta(response);
+}
