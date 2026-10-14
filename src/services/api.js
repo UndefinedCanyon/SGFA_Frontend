@@ -239,3 +239,17 @@ export async function actualizarFeria(idFeria, nombreFeria, token) {
     });
     return manejarRespuesta(response);
 }
+
+export async function consultarOcupacion(idEdicion) {
+    const response = await fetch(`${BASE_URL}/edicionesferia/${idEdicion}/ocupacion`);
+    return manejarRespuesta(response);
+}
+
+export async function configurarCupoEdicion(idEdicion, cupoMaximo, token) {
+    const response = await fetch(`${BASE_URL}/edicionesferia/${idEdicion}/cupo`, {
+        method: "PUT",
+        headers: headersConToken(token),
+        body: JSON.stringify({ cupoMaximo }),
+    });
+    return manejarRespuesta(response);
+}

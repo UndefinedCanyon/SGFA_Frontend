@@ -1,3 +1,4 @@
+import RegistrarArtesanoAdmin from "../components/RegistrarArtesanoAdmin";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -86,12 +87,13 @@ function PanelAdministrador() {
         }
     }
 
-    async function manejarAprobar(idInscripcion) {
+       async function manejarAprobar(idInscripcion) {
         setError(null);
         setProcesandoId(idInscripcion);
         try {
             await aprobarSolicitud(idInscripcion, usuario.token);
             await cargarSolicitudes();
+            setVersionDatos((v) => v + 1);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -105,6 +107,7 @@ function PanelAdministrador() {
         try {
             await rechazarSolicitud(idInscripcion, usuario.token);
             await cargarSolicitudes();
+            setVersionDatos((v) => v + 1);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -371,7 +374,7 @@ function PanelAdministrador() {
                     ))}
                 </div>
             </div>
-
+            <RegistrarArtesanoAdmin onArtesanoCreado={cargarGestion} />
             <GestionLugares onLugarCreado={() => setVersionDatos((v) => v + 1)} />
             <GestionEdiciones version={versionDatos} />
 

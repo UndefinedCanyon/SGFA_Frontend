@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
     consultarTodasLasFerias, consultarLugares, consultarTodasLasEdiciones,
-    crearEdicionFeria, cambiarEstadoEdicion,
+    crearEdicionFeria, cambiarEstadoEdicion, consultarOcupacion, configurarCupoEdicion,
 } from "../services/api";
+import BarraCupo from "./BarraCupo";
 
 function GestionEdiciones({ version }) {
     const { usuario } = useAuth();
@@ -11,6 +12,7 @@ function GestionEdiciones({ version }) {
     const [ferias, setFerias] = useState([]);
     const [lugares, setLugares] = useState([]);
     const [ediciones, setEdiciones] = useState([]);
+    const [ocupaciones, setOcupaciones] = useState({});
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState(null);
     const [mensaje, setMensaje] = useState(null);
@@ -20,6 +22,10 @@ function GestionEdiciones({ version }) {
         idFeria: "", idLugar: "", fechaInicio: "", fechaFin: "",
     });
 
+    const [cupoEditandoId, setCupoEditandoId] = useState(null);
+    const [cupoEditado, setCupoEditado] = useState("");
+    const [guardandoCupo, setGuardandoCupo] = useState(false);
+
     async function cargarDatos() {
         try {
             const [datosFerias, datosLugares, datosEdiciones] = await Promise.all([
@@ -27,9 +33,19 @@ function GestionEdiciones({ version }) {
                 consultarLugares(),
                 consultarTodasLasEdiciones(usuario.token),
             ]);
+
+            const listaOcupaciones = await Promise.all(
+                datosEdiciones.map((edicion) => consultarOcupacion(edicion.id))
+            );
+            const mapa = {};
+            datosEdiciones.forEach((edicion, i) => {
+                mapa[edicion.id] = listaOcupaciones[i];
+            });
+
             setFerias(datosFerias);
             setLugares(datosLugares);
             setEdiciones(datosEdiciones);
+            setOcupaciones(mapa);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -87,6 +103,32 @@ function GestionEdiciones({ version }) {
             setError(err.message);
         } finally {
             setCambiandoId(null);
+        }
+    }
+
+    function iniciarCupo(edicion) {
+        setError(null);
+        setCupoEditandoId(edicion.id);
+        setCupoEditado(edicion.cupoMaximo ?? "");
+    }
+
+    function cancelarCupo() {
+        setCupoEditandoId(null);
+        setCupoEditado("");
+    }
+
+    async function guardarCupo(idEdicion) {
+        setError(null);
+        setGuardandoCupo(true);
+        try {
+            const valor = cupoEditado === "" ? null : Number(cupoEditado);
+            await configurarCupoEdicion(idEdicion, valor, usuario.token);
+            cancelarCupo();
+            await cargarDatos();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setGuardandoCupo(false);
         }
     }
 
@@ -188,33 +230,81 @@ function GestionEdiciones({ version }) {
                 {ediciones.map((edicion) => (
                     <div
                         key={edicion.id}
-                        className={`flex items-center justify-between border rounded-lg px-4 py-3 ${
+                        className={`border rounded-lg px-4 py-3 ${
                             edicion.activo ? "border-gray-100" : "border-red-100 bg-red-50"
                         }`}
                     >
-                        <div>
-                            <p className="text-sm font-medium text-gray-700">
-                                {nombreFeria(edicion.idFeria)}{" "}
-                                {!edicion.activo && (
-                                    <span className="text-xs text-red-600 font-medium">(inactiva)</span>
-                                )}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                                {formatearFecha(edicion.fechaInicio)} — {formatearFecha(edicion.fechaFin)}
-                                {" · "}{nombreLugar(edicion.idLugar)}
-                            </p>
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-700">
+                                    {nombreFeria(edicion.idFeria)}{" "}
+                                    {!edicion.activo && (
+                                        <span className="text-xs text-red-600 font-medium">(inactiva)</span>
+                                    )}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {formatearFecha(edicion.fechaInicio)} — {formatearFecha(edicion.fechaFin)}
+                                    {" · "}{nombreLugar(edicion.idLugar)}
+                                </p>
+                                <div className="mt-2 max-w-xs">
+                                    <BarraCupo ocupacion={ocupaciones[edicion.id]} />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => iniciarCupo(edicion)}
+                                    className="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Configurar cupo
+                                </button>
+                                <button
+                                    onClick={() => manejarEstado(edicion.id, !edicion.activo)}
+                                    disabled={cambiandoId === edicion.id}
+                                    className={`text-sm px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                                        edicion.activo
+                                            ? "bg-red-600 text-white hover:bg-red-700"
+                                            : "bg-green-600 text-white hover:bg-green-700"
+                                    }`}
+                                >
+                                    {edicion.activo ? "Desactivar" : "Reactivar"}
+                                </button>
+                            </div>
                         </div>
-                        <button
-                            onClick={() => manejarEstado(edicion.id, !edicion.activo)}
-                            disabled={cambiandoId === edicion.id}
-                            className={`text-sm px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
-                                edicion.activo
-                                    ? "bg-red-600 text-white hover:bg-red-700"
-                                    : "bg-green-600 text-white hover:bg-green-700"
-                            }`}
-                        >
-                            {edicion.activo ? "Desactivar" : "Reactivar"}
-                        </button>
+
+                        {cupoEditandoId === edicion.id && (
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    guardarCupo(edicion.id);
+                                }}
+                                className="mt-3 flex flex-wrap items-center gap-2"
+                            >
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={cupoEditado}
+                                    onChange={(e) => setCupoEditado(e.target.value)}
+                                    placeholder="Vacío = sin límite"
+                                    autoFocus
+                                    className="w-48 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={guardandoCupo}
+                                    className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                                >
+                                    {guardandoCupo ? "Guardando..." : "Guardar cupo"}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={cancelarCupo}
+                                    className="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                            </form>
+                        )}
                     </div>
                 ))}
             </div>

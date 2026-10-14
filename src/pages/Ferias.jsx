@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import {
     consultarFerias, consultarEdicionesFeria, consultarLugares,
-    solicitarParticipacion, consultarParticipantes,
+    solicitarParticipacion, consultarParticipantes, consultarOcupacion,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import BarraCupo from "../components/BarraCupo";
 
 function Ferias() {
     const { usuario } = useAuth();
@@ -12,6 +13,7 @@ function Ferias() {
     const [lugares, setLugares] = useState([]);
     const [feriaSeleccionada, setFeriaSeleccionada] = useState(null);
     const [ediciones, setEdiciones] = useState([]);
+    const [ocupaciones, setOcupaciones] = useState({});
     const [cargando, setCargando] = useState(true);
     const [cargandoEdiciones, setCargandoEdiciones] = useState(false);
     const [error, setError] = useState(null);
@@ -44,6 +46,7 @@ function Ferias() {
     async function verEdiciones(feria) {
         setFeriaSeleccionada(feria);
         setEdiciones([]);
+        setOcupaciones({});
         setEdicionAbiertaId(null);
         setParticipantes([]);
         setMensaje(null);
@@ -51,7 +54,15 @@ function Ferias() {
         setCargandoEdiciones(true);
         try {
             const datos = await consultarEdicionesFeria(feria.id);
+            const listaOcupaciones = await Promise.all(
+                datos.map((edicion) => consultarOcupacion(edicion.id))
+            );
+            const mapa = {};
+            datos.forEach((edicion, i) => {
+                mapa[edicion.id] = listaOcupaciones[i];
+            });
             setEdiciones(datos);
+            setOcupaciones(mapa);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -176,92 +187,104 @@ function Ferias() {
                     )}
 
                     <div className="flex flex-col gap-4">
-                        {ediciones.map((edicion) => (
-                            <div
-                                key={edicion.id}
-                                className="border border-green-100 bg-green-50 rounded-xl p-4"
-                            >
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <div>
-                                        <p className="font-medium text-gray-800">
-                                            {formatearFecha(edicion.fechaInicio)} — {formatearFecha(edicion.fechaFin)}
-                                        </p>
-                                        <p className="text-sm text-gray-500">{nombreLugar(edicion.idLugar)}</p>
-                                    </div>
+                        {ediciones.map((edicion) => {
+                            const ocupacion = ocupaciones[edicion.id];
+                            const cupoLleno = ocupacion ? ocupacion.disponibles === 0 : false;
 
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => alternarParticipantes(edicion.id)}
-                                            className="text-sm border border-green-600 text-green-700 px-4 py-1.5 rounded-lg hover:bg-green-100 transition-colors"
-                                        >
-                                            {edicionAbiertaId === edicion.id ? "Ocultar participantes" : "Ver participantes"}
-                                        </button>
-
-                                        {usuario?.rol === "ARTESANO" && (
-                                            <button
-                                                onClick={() => manejarSolicitud(edicion.id)}
-                                                disabled={solicitandoId === edicion.id}
-                                                className="text-sm bg-green-600 text-white px-4 py-1.5 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                                            >
-                                                {solicitandoId === edicion.id ? "Enviando..." : "Solicitar participación"}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {edicionAbiertaId === edicion.id && (
-                                    <div className="mt-4 pt-4 border-t border-green-100">
-                                        {cargandoParticipantes && (
-                                            <p className="text-gray-500 text-sm">Cargando participantes...</p>
-                                        )}
-
-                                        {!cargandoParticipantes && participantes.length === 0 && (
-                                            <p className="text-gray-500 text-sm">
-                                                Aún no hay artesanos confirmados en esta edición.
+                            return (
+                                <div
+                                    key={edicion.id}
+                                    className="border border-green-100 bg-green-50 rounded-xl p-4"
+                                >
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <p className="font-medium text-gray-800">
+                                                {formatearFecha(edicion.fechaInicio)} — {formatearFecha(edicion.fechaFin)}
                                             </p>
-                                        )}
+                                            <p className="text-sm text-gray-500">{nombreLugar(edicion.idLugar)}</p>
+                                            <div className="mt-3 w-56">
+                                                <BarraCupo ocupacion={ocupacion} />
+                                            </div>
+                                        </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            {participantes.map((participante) => (
-                                                <div
-                                                    key={participante.id}
-                                                    className="bg-white border border-gray-100 rounded-xl p-4"
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => alternarParticipantes(edicion.id)}
+                                                className="text-sm border border-green-600 text-green-700 px-4 py-1.5 rounded-lg hover:bg-green-100 transition-colors"
+                                            >
+                                                {edicionAbiertaId === edicion.id ? "Ocultar participantes" : "Ver participantes"}
+                                            </button>
+
+                                            {usuario?.rol === "ARTESANO" && (
+                                                <button
+                                                    onClick={() => manejarSolicitud(edicion.id)}
+                                                    disabled={solicitandoId === edicion.id || cupoLleno}
+                                                    className="text-sm bg-green-600 text-white px-4 py-1.5 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    <h4 className="font-semibold text-gray-800">
-                                                        {participante.nombreEmprendimiento}
-                                                    </h4>
-                                                    {participante.descripcionCorta && (
-                                                        <p className="text-sm text-gray-500 mb-2">
-                                                            {participante.descripcionCorta}
-                                                        </p>
-                                                    )}
-
-                                                    {participante.productos.length === 0 ? (
-                                                        <p className="text-xs text-gray-400">
-                                                            Sin productos publicados.
-                                                        </p>
-                                                    ) : (
-                                                        <ul className="mt-2 flex flex-col gap-1">
-                                                            {participante.productos.map((producto) => (
-                                                                <li
-                                                                    key={producto.id}
-                                                                    className="flex justify-between text-sm text-gray-600"
-                                                                >
-                                                                    <span>{producto.nombre}</span>
-                                                                    <span className="text-gray-500">
-                                                                        ${formatearPrecio(producto.precio)}
-                                                                    </span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
-                                                </div>
-                                            ))}
+                                                    {cupoLleno
+                                                        ? "Cupo completo"
+                                                        : solicitandoId === edicion.id
+                                                            ? "Enviando..."
+                                                            : "Solicitar participación"}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        ))}
+
+                                    {edicionAbiertaId === edicion.id && (
+                                        <div className="mt-4 pt-4 border-t border-green-100">
+                                            {cargandoParticipantes && (
+                                                <p className="text-gray-500 text-sm">Cargando participantes...</p>
+                                            )}
+
+                                            {!cargandoParticipantes && participantes.length === 0 && (
+                                                <p className="text-gray-500 text-sm">
+                                                    Aún no hay artesanos confirmados en esta edición.
+                                                </p>
+                                            )}
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {participantes.map((participante) => (
+                                                    <div
+                                                        key={participante.id}
+                                                        className="bg-white border border-gray-100 rounded-xl p-4"
+                                                    >
+                                                        <h4 className="font-semibold text-gray-800">
+                                                            {participante.nombreEmprendimiento}
+                                                        </h4>
+                                                        {participante.descripcionCorta && (
+                                                            <p className="text-sm text-gray-500 mb-2">
+                                                                {participante.descripcionCorta}
+                                                            </p>
+                                                        )}
+
+                                                        {participante.productos.length === 0 ? (
+                                                            <p className="text-xs text-gray-400">
+                                                                Sin productos publicados.
+                                                            </p>
+                                                        ) : (
+                                                            <ul className="mt-2 flex flex-col gap-1">
+                                                                {participante.productos.map((producto) => (
+                                                                    <li
+                                                                        key={producto.id}
+                                                                        className="flex justify-between text-sm text-gray-600"
+                                                                    >
+                                                                        <span>{producto.nombre}</span>
+                                                                        <span className="text-gray-500">
+                                                                            ${formatearPrecio(producto.precio)}
+                                                                        </span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
