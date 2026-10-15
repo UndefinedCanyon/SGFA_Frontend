@@ -1,21 +1,32 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { registrarArtesano } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { destinoPorRol } from "../utils/helpers";
+import { Boton, Campo, Alerta } from "../components/ui";
+
+const FORMULARIO_VACIO = {
+    nombre: "",
+    correoElectronico: "",
+    contrasena: "",
+    cc: "",
+    telefono: "",
+    nombreEmprendimiento: "",
+    descripcionCorta: "",
+};
 
 function RegistroArtesano() {
-    const [formulario, setFormulario] = useState({
-        nombre: "",
-        correoElectronico: "",
-        contrasena: "",
-        cc: "",
-        telefono: "",
-        nombreEmprendimiento: "",
-        descripcionCorta: "",
-    });
+    const { usuario } = useAuth();
+    const navigate = useNavigate();
 
-    const [mensaje, setMensaje] = useState(null);
+    const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
+    const [verContrasena, setVerContrasena] = useState(false);
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
+
+    if (usuario) {
+        return <Navigate to={destinoPorRol(usuario.rol)} replace />;
+    }
 
     function manejarCambio(evento) {
         const { name, value } = evento.target;
@@ -24,143 +35,124 @@ function RegistroArtesano() {
 
     async function manejarEnvio(evento) {
         evento.preventDefault();
-        setMensaje(null);
         setError(null);
         setCargando(true);
 
         try {
-            const artesanoCreado = await registrarArtesano(formulario);
-            setMensaje(`Artesano "${artesanoCreado.nombreEmprendimiento}" registrado con éxito.`);
-            setFormulario({
-                nombre: "",
-                correoElectronico: "",
-                contrasena: "",
-                cc: "",
-                telefono: "",
-                nombreEmprendimiento: "",
-                descripcionCorta: "",
+            await registrarArtesano(formulario);
+            navigate("/login", {
+                state: { registrado: true, correo: formulario.correoElectronico },
             });
         } catch (err) {
             setError(err.message);
-        } finally {
             setCargando(false);
         }
     }
 
-    const campoClase =
-        "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
-    const labelClase = "block text-sm font-medium text-gray-700 mb-1";
-
     return (
-        <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 px-4 py-10">
-            <div className="w-full max-w-lg bg-white rounded-2xl shadow-md border border-green-100 p-8">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-1">Registro de Artesano</h2>
-                <p className="text-sm text-gray-500 mb-6">
-                    Únete a las ferias artesanales de Fusagasugá
-                </p>
+        <div className="flex justify-center px-4 py-12">
+            <div className="w-full max-w-lg">
+                <div className="text-center mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-900">Registro de artesano</h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Únete a las ferias artesanales de Fusagasugá
+                    </p>
+                </div>
 
-                <form onSubmit={manejarEnvio} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="sm:col-span-2">
-                        <label className={labelClase}>Nombre completo</label>
-                        <input
-                            type="text"
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                    <form onSubmit={manejarEnvio} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Campo
+                            className="sm:col-span-2"
+                            etiqueta="Nombre completo"
                             name="nombre"
                             value={formulario.nombre}
                             onChange={manejarCambio}
                             required
-                            className={campoClase}
+                            autoComplete="name"
+                            autoFocus
                         />
-                    </div>
 
-                    <div>
-                        <label className={labelClase}>Correo electrónico</label>
-                        <input
+                        <Campo
+                            etiqueta="Correo electrónico"
                             type="email"
                             name="correoElectronico"
                             value={formulario.correoElectronico}
                             onChange={manejarCambio}
                             required
-                            className={campoClase}
+                            autoComplete="email"
                         />
-                    </div>
 
-                    <div>
-                        <label className={labelClase}>Contraseña</label>
-                        <input
-                            type="password"
+                        <Campo
+                            etiqueta="Contraseña"
+                            type={verContrasena ? "text" : "password"}
                             name="contrasena"
                             value={formulario.contrasena}
                             onChange={manejarCambio}
                             required
-                            className={campoClase}
+                            autoComplete="new-password"
                         />
-                    </div>
 
-                    <div>
-                        <label className={labelClase}>Cédula</label>
-                        <input
-                            type="text"
+                        <label className="sm:col-span-2 flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={verContrasena}
+                                onChange={(e) => setVerContrasena(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                            />
+                            Mostrar contraseña
+                        </label>
+
+                        <Campo
+                            etiqueta="Cédula"
                             name="cc"
                             value={formulario.cc}
                             onChange={manejarCambio}
                             required
-                            className={campoClase}
+                            inputMode="numeric"
                         />
-                    </div>
 
-                    <div>
-                        <label className={labelClase}>Teléfono</label>
-                        <input
-                            type="text"
+                        <Campo
+                            etiqueta="Teléfono"
+                            type="tel"
                             name="telefono"
                             value={formulario.telefono}
                             onChange={manejarCambio}
-                            className={campoClase}
+                            autoComplete="tel"
                         />
-                    </div>
 
-                    <div className="sm:col-span-2">
-                        <label className={labelClase}>Nombre del emprendimiento</label>
-                        <input
-                            type="text"
+                        <Campo
+                            className="sm:col-span-2"
+                            etiqueta="Nombre del emprendimiento"
                             name="nombreEmprendimiento"
                             value={formulario.nombreEmprendimiento}
                             onChange={manejarCambio}
                             required
-                            className={campoClase}
                         />
-                    </div>
 
-                    <div className="sm:col-span-2">
-                        <label className={labelClase}>Descripción corta</label>
-                        <textarea
+                        <Campo
+                            className="sm:col-span-2"
+                            etiqueta="Descripción corta"
+                            as="textarea"
                             name="descripcionCorta"
                             value={formulario.descripcionCorta}
                             onChange={manejarCambio}
                             rows={3}
-                            className={campoClase}
+                            ayuda="Cuéntale al público qué haces. Se muestra en las ferias en las que participes."
                         />
-                    </div>
 
-                    <button
-                        type="submit"
-                        disabled={cargando}
-                        className="sm:col-span-2 mt-2 bg-green-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
-                    >
-                        {cargando ? "Registrando..." : "Registrarse"}
-                    </button>
-                </form>
+                        <Alerta tipo="error" className="sm:col-span-2">
+                            {error}
+                        </Alerta>
 
-                {mensaje && (
-                    <p className="mt-4 text-sm text-green-700 bg-green-50 rounded-lg p-3">{mensaje}</p>
-                )}
-                {error && (
-                    <p className="mt-4 text-sm text-red-700 bg-red-50 rounded-lg p-3">{error}</p>
-                )}
+                        <Boton type="submit" cargando={cargando} className="sm:col-span-2">
+                            {cargando ? "Registrando..." : "Crear mi cuenta"}
+                        </Boton>
+                    </form>
+                </div>
 
                 <p className="mt-6 text-sm text-gray-500 text-center">
                     ¿Ya tienes cuenta?{" "}
-                    <Link to="/login" className="text-green-600 font-medium hover:underline">
+                    <Link to="/login" className="text-green-700 font-medium hover:underline">
                         Inicia sesión
                     </Link>
                 </p>

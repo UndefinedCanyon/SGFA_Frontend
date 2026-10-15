@@ -1,15 +1,24 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { iniciarSesion } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { destinoPorRol } from "../utils/helpers";
+import { Boton, Campo, Alerta } from "../components/ui";
+import logo from "../assets/logo-sgfa.png";
 
 function Login() {
-    const [correoElectronico, setCorreoElectronico] = useState("");
+    const { usuario, iniciarSesionContexto } = useAuth();
+    const { state } = useLocation();
+
+    const [correoElectronico, setCorreoElectronico] = useState(state?.correo ?? "");
     const [contrasena, setContrasena] = useState("");
+    const [verContrasena, setVerContrasena] = useState(false);
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
 
-    const { usuario, iniciarSesionContexto } = useAuth();
+    if (usuario) {
+        return <Navigate to={destinoPorRol(usuario.rol)} replace />;
+    }
 
     async function manejarEnvio(evento) {
         evento.preventDefault();
@@ -21,65 +30,68 @@ function Login() {
             iniciarSesionContexto(resultado);
         } catch (err) {
             setError(err.message);
-        } finally {
             setCargando(false);
         }
     }
 
     return (
-        <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 px-4">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-md border border-green-100 p-8">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-1">Iniciar sesión</h2>
-                <p className="text-sm text-gray-500 mb-6">Accede a tu cuenta de SGFA</p>
+        <div className="flex items-center justify-center px-4 py-12">
+            <div className="w-full max-w-sm">
+                <div className="text-center mb-6">
+                    <img src={logo} alt="" className="h-14 w-14 mx-auto mb-3" />
+                    <h2 className="text-2xl font-semibold text-gray-900">Iniciar sesión</h2>
+                    <p className="text-sm text-gray-500 mt-1">Accede a tu cuenta de SGFA</p>
+                </div>
 
-                <form onSubmit={manejarEnvio} className="flex flex-col gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Correo electrónico
-                        </label>
-                        <input
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                    {state?.registrado && (
+                        <Alerta tipo="exito" className="mb-4">
+                            Cuenta creada con éxito. Inicia sesión para continuar.
+                        </Alerta>
+                    )}
+
+                    <form onSubmit={manejarEnvio} className="flex flex-col gap-4">
+                        <Campo
+                            etiqueta="Correo electrónico"
                             type="email"
                             value={correoElectronico}
                             onChange={(e) => setCorreoElectronico(e.target.value)}
                             required
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            autoComplete="email"
+                            autoFocus={!state?.correo}
                         />
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Contraseña
-                        </label>
-                        <input
-                            type="password"
+                        <Campo
+                            etiqueta="Contraseña"
+                            type={verContrasena ? "text" : "password"}
                             value={contrasena}
                             onChange={(e) => setContrasena(e.target.value)}
                             required
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            autoComplete="current-password"
+                            autoFocus={Boolean(state?.correo)}
                         />
-                    </div>
 
-                    <button
-                        type="submit"
-                        disabled={cargando}
-                        className="mt-2 bg-green-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
-                    >
-                        {cargando ? "Ingresando..." : "Ingresar"}
-                    </button>
-                </form>
+                        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={verContrasena}
+                                onChange={(e) => setVerContrasena(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                            />
+                            Mostrar contraseña
+                        </label>
 
-                {usuario && (
-                    <p className="mt-4 text-sm text-green-700 bg-green-50 rounded-lg p-3">
-                        Bienvenido/a, {usuario.nombre} (rol: {usuario.rol})
-                    </p>
-                )}
-                {error && (
-                    <p className="mt-4 text-sm text-red-700 bg-red-50 rounded-lg p-3">{error}</p>
-                )}
+                        <Alerta tipo="error">{error}</Alerta>
+
+                        <Boton type="submit" cargando={cargando} className="w-full">
+                            {cargando ? "Ingresando..." : "Ingresar"}
+                        </Boton>
+                    </form>
+                </div>
 
                 <p className="mt-6 text-sm text-gray-500 text-center">
                     ¿No tienes cuenta?{" "}
-                    <Link to="/registro" className="text-green-600 font-medium hover:underline">
+                    <Link to="/registro" className="text-green-700 font-medium hover:underline">
                         Regístrate aquí
                     </Link>
                 </p>

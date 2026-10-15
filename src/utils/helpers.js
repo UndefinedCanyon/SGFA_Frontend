@@ -15,3 +15,7 @@ export function describirEdicion(idEdicion, ediciones, ferias, lugares) {
 
     return `${nombreFeria} · ${formatearFecha(edicion.fechaInicio)} al ${formatearFecha(edicion.fechaFin)} · ${nombreLugar}`;
 }
+
+export function destinoPorRol(rol) {
+    return rol === "ADMINISTRADOR" ? "/admin" : "/mi-panel";
+}
