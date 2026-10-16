@@ -1,25 +1,59 @@
-import MiPerfil from "../components/MiPerfil";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
     consultarMisProductos, crearProducto, actualizarProducto, eliminarProducto,
     consultarMisSolicitudes, consultarFerias, consultarEdicionesFeria, consultarLugares,
 } from "../services/api";
-import { describirEdicion, formatearFecha } from "../utils/helpers";
+import { formatearFechaCorta, formatearPrecio } from "../utils/helpers";
+import {
+    Alerta, Boton, Campo, ConfirmarDialogo, EstadoVacio, Esqueleto,
+    Insignia, Pestanas, PanelPestana, Tarjeta,
+} from "../components/ui";
+import MiPerfil from "../components/MiPerfil";
+
+const FORMULARIO_VACIO = { nombre: "", precio: "", cantidad: "" };
+
+const ESTADOS_SOLICITUD = {
+    PENDIENTE: { texto: "Pendiente", tono: "ambar", ayuda: "En revisión por el administrador." },
+    APROBADA: { texto: "Aprobada", tono: "verde", ayuda: "Participas en esta edición." },
+    RECHAZADA: { texto: "Rechazada", tono: "rojo", ayuda: "El administrador no aprobó esta solicitud." },
+};
+
+const ORDEN_SOLICITUD = { PENDIENTE: 0, APROBADA: 1, RECHAZADA: 2 };
+
+function Estadistica({ etiqueta, valor, cargando }) {
+    return (
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-xs text-gray-500">{etiqueta}</p>
+            <div className="mt-1 text-2xl font-semibold text-gray-900">
+                {cargando ? <Esqueleto className="h-8 w-10" /> : valor}
+            </div>
+        </div>
+    );
+}
 
 function PanelArtesano() {
     const { usuario } = useAuth();
 
+    const [pestana, setPestana] = useState("productos");
+
     const [productos, setProductos] = useState([]);
     const [cargandoProductos, setCargandoProductos] = useState(true);
-    const [error, setError] = useState(null);
+    const [errorProductos, setErrorProductos] = useState(null);
+    const [mensajeProductos, setMensajeProductos] = useState(null);
 
-    const [formulario, setFormulario] = useState({ nombre: "", precio: "", cantidad: "" });
+    const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
     const [editandoId, setEditandoId] = useState(null);
     const [guardando, setGuardando] = useState(false);
+    const formularioRef = useRef(null);
+
+    const [productoAEliminar, setProductoAEliminar] = useState(null);
+    const [eliminando, setEliminando] = useState(false);
 
     const [solicitudes, setSolicitudes] = useState([]);
     const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
+    const [errorSolicitudes, setErrorSolicitudes] = useState(null);
 
     const [ferias, setFerias] = useState([]);
     const [ediciones, setEdiciones] = useState([]);
@@ -27,10 +61,9 @@ function PanelArtesano() {
 
     async function cargarProductos() {
         try {
-            const datos = await consultarMisProductos(usuario.token);
-            setProductos(datos);
+            setProductos(await consultarMisProductos(usuario.token));
         } catch (err) {
-            setError(err.message);
+            setErrorProductos(err.message);
         } finally {
             setCargandoProductos(false);
         }
@@ -38,16 +71,16 @@ function PanelArtesano() {
 
     async function cargarSolicitudes() {
         try {
-            const datos = await consultarMisSolicitudes(usuario.token);
-            setSolicitudes(datos);
+            setSolicitudes(await consultarMisSolicitudes(usuario.token));
         } catch (err) {
-            setError(err.message);
+            setErrorSolicitudes(err.message);
         } finally {
             setCargandoSolicitudes(false);
         }
     }
 
     async function cargarReferencias() {
+        // Si falla, las solicitudes se muestran igual con el texto de respaldo "Edición #N".
         try {
             const [datosFerias, datosEdiciones, datosLugares] = await Promise.all([
                 consultarFerias(),
@@ -57,8 +90,8 @@ function PanelArtesano() {
             setFerias(datosFerias);
             setEdiciones(datosEdiciones);
             setLugares(datosLugares);
-        } catch (err) {
-            setError(err.message);
+        } catch {
+            /* sin referencias: se usan los textos de respaldo */
         }
     }
 
@@ -73,27 +106,32 @@ function PanelArtesano() {
         setFormulario((anterior) => ({ ...anterior, [name]: value }));
     }
 
+    function reiniciarFormulario() {
+        setEditandoId(null);
+        setFormulario(FORMULARIO_VACIO);
+    }
+
     function iniciarEdicion(producto) {
+        setMensajeProductos(null);
+        setErrorProductos(null);
         setEditandoId(producto.id);
         setFormulario({
             nombre: producto.nombre,
-            precio: producto.precio,
-            cantidad: producto.cantidad,
+            precio: String(producto.precio),
+            cantidad: String(producto.cantidad),
         });
-    }
-
-    function cancelarEdicion() {
-        setEditandoId(null);
-        setFormulario({ nombre: "", precio: "", cantidad: "" });
+        formularioRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        formularioRef.current?.querySelector("input")?.focus({ preventScroll: true });
     }
 
     async function manejarEnvio(evento) {
         evento.preventDefault();
-        setError(null);
+        setErrorProductos(null);
+        setMensajeProductos(null);
         setGuardando(true);
 
         const datos = {
-            nombre: formulario.nombre,
+            nombre: formulario.nombre.trim(),
             precio: Number(formulario.precio),
             cantidad: Number(formulario.cantidad),
         };
@@ -101,171 +139,309 @@ function PanelArtesano() {
         try {
             if (editandoId) {
                 await actualizarProducto(editandoId, datos, usuario.token);
+                setMensajeProductos(`Producto "${datos.nombre}" actualizado.`);
             } else {
                 await crearProducto(datos, usuario.token);
+                setMensajeProductos(`Producto "${datos.nombre}" agregado a tu catálogo.`);
             }
-            cancelarEdicion();
+            reiniciarFormulario();
             await cargarProductos();
         } catch (err) {
-            setError(err.message);
+            setErrorProductos(err.message);
         } finally {
             setGuardando(false);
         }
     }
 
-    async function manejarEliminar(idProducto) {
-        setError(null);
+    async function confirmarEliminacion() {
+        const producto = productoAEliminar;
+        setErrorProductos(null);
+        setMensajeProductos(null);
+        setEliminando(true);
+
         try {
-            await eliminarProducto(idProducto, usuario.token);
+            await eliminarProducto(producto.id, usuario.token);
+            if (editandoId === producto.id) reiniciarFormulario();
+            setMensajeProductos(`Producto "${producto.nombre}" eliminado.`);
             await cargarProductos();
         } catch (err) {
-            setError(err.message);
+            setErrorProductos(err.message);
+        } finally {
+            setEliminando(false);
+            setProductoAEliminar(null);
         }
     }
 
-    function colorEstado(estado) {
-        if (estado === "APROBADA") return "bg-green-100 text-green-800";
-        if (estado === "RECHAZADA") return "bg-red-100 text-red-800";
-        return "bg-amber-100 text-amber-800";
+    function detalleEdicion(idEdicion) {
+        const edicion = ediciones.find((e) => e.id === idEdicion);
+        if (!edicion) {
+            return {
+                titulo: `Edición #${idEdicion}`,
+                detalle: "Esta edición ya no está publicada.",
+            };
+        }
+
+        const feria = ferias.find((f) => f.id === edicion.idFeria);
+        const lugar = lugares.find((l) => l.id === edicion.idLugar);
+
+        return {
+            titulo: feria ? feria.nombreFeria : `Feria #${edicion.idFeria}`,
+            detalle: `${formatearFechaCorta(edicion.fechaInicio)} — ${formatearFechaCorta(edicion.fechaFin)} · ${
+                lugar ? lugar.nombre : `Lugar #${edicion.idLugar}`
+            }`,
+        };
     }
 
-    const campoClase =
-        "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500";
+    const solicitudesOrdenadas = [...solicitudes].sort(
+        (a, b) =>
+            ORDEN_SOLICITUD[a.estado] - ORDEN_SOLICITUD[b.estado] ||
+            b.fechaInscripcion.localeCompare(a.fechaInscripcion)
+    );
+    const pendientes = solicitudes.filter((s) => s.estado === "PENDIENTE").length;
+    const aprobadas = solicitudes.filter((s) => s.estado === "APROBADA").length;
+
+    const pestanas = [
+        {
+            id: "productos",
+            etiqueta: "Mis productos",
+            contador: cargandoProductos ? undefined : productos.length,
+        },
+        {
+            id: "solicitudes",
+            etiqueta: "Solicitudes",
+            contador: pendientes > 0 ? pendientes : undefined,
+        },
+        { id: "perfil", etiqueta: "Mi perfil" },
+    ];
 
     return (
-        <div className="max-w-4xl mx-auto px-6 py-10">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-1">Mi panel</h2>
-            <p className="text-gray-500 mb-8">Bienvenido, {usuario.nombre}</p>
+        <div className="max-w-5xl mx-auto px-6 py-10">
+            <div className="mb-6">
+                <h2 className="text-2xl font-semibold text-gray-900">Mi panel</h2>
+                <p className="text-gray-500 mt-1">
+                    Hola, {usuario.nombre}. Administra tu catálogo y sigue tus solicitudes de participación.
+                </p>
+            </div>
 
-            {error && (
-                <p className="text-sm text-red-700 bg-red-50 rounded-lg p-3 mb-6">{error}</p>
-            )}
-            <MiPerfil />
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis solicitudes de participación</h3>
+            <div className="grid grid-cols-3 gap-3 mb-8">
+                <Estadistica etiqueta="Productos" valor={productos.length} cargando={cargandoProductos} />
+                <Estadistica etiqueta="Pendientes" valor={pendientes} cargando={cargandoSolicitudes} />
+                <Estadistica etiqueta="Aprobadas" valor={aprobadas} cargando={cargandoSolicitudes} />
+            </div>
 
-                {cargandoSolicitudes && <p className="text-gray-500 text-sm">Cargando...</p>}
+            <Pestanas
+                idBase="panel-artesano"
+                pestanas={pestanas}
+                activa={pestana}
+                onCambiar={setPestana}
+            />
 
-                {!cargandoSolicitudes && solicitudes.length === 0 && (
-                    <p className="text-gray-500 text-sm">Aún no has solicitado participar en ninguna feria.</p>
-                )}
-
-                <div className="flex flex-col gap-2">
-                    {solicitudes.map((solicitud) => (
-                        <div
-                            key={solicitud.id}
-                            className="flex items-center justify-between gap-4 border border-gray-100 rounded-lg px-4 py-3"
+            <div className="mt-6">
+                <PanelPestana idBase="panel-artesano" id="productos" activa={pestana}>
+                    <div ref={formularioRef} className="mb-8">
+                        <Tarjeta
+                            titulo={editandoId ? "Editar producto" : "Agregar producto"}
+                            descripcion={
+                                editandoId
+                                    ? "Modifica los datos y guarda los cambios."
+                                    : "Los productos que registres se muestran al público cuando tu participación sea aprobada."
+                            }
                         >
-                            <div>
-                                <p className="text-sm text-gray-700">
-                                    {describirEdicion(solicitud.idEdicionFeria, ediciones, ferias, lugares)}
-                                </p>
-                                <p className="text-xs text-gray-400">
-                                    Solicitada el {formatearFecha(solicitud.fechaInscripcion)}
-                                </p>
+                            <form onSubmit={manejarEnvio} className="grid grid-cols-1 sm:grid-cols-6 gap-4 items-end">
+                                <Campo
+                                    className="sm:col-span-6"
+                                    etiqueta="Nombre del producto"
+                                    name="nombre"
+                                    value={formulario.nombre}
+                                    onChange={manejarCambio}
+                                    required
+                                    maxLength={150}
+                                />
+                                <Campo
+                                    className="sm:col-span-2"
+                                    etiqueta="Precio (COP)"
+                                    type="number"
+                                    name="precio"
+                                    value={formulario.precio}
+                                    onChange={manejarCambio}
+                                    required
+                                    min="0"
+                                    step="0.01"
+                                    inputMode="decimal"
+                                />
+                                <Campo
+                                    className="sm:col-span-2"
+                                    etiqueta="Cantidad disponible"
+                                    type="number"
+                                    name="cantidad"
+                                    value={formulario.cantidad}
+                                    onChange={manejarCambio}
+                                    required
+                                    min="0"
+                                    step="1"
+                                    inputMode="numeric"
+                                />
+                                <div className="sm:col-span-2 flex gap-2">
+                                    <Boton type="submit" cargando={guardando} className="flex-1">
+                                        {guardando ? "Guardando..." : editandoId ? "Actualizar" : "Agregar"}
+                                    </Boton>
+                                    {editandoId && (
+                                        <Boton variante="secundario" onClick={reiniciarFormulario}>
+                                            Cancelar
+                                        </Boton>
+                                    )}
+                                </div>
+                            </form>
+
+                            <Alerta tipo="error" className="mt-4">{errorProductos}</Alerta>
+                            <Alerta tipo="exito" className="mt-4">{mensajeProductos}</Alerta>
+                        </Tarjeta>
+                    </div>
+
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Mi catálogo</h3>
+
+                    {cargandoProductos ? (
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Esqueleto className="h-32 w-full rounded-2xl" />
+                            <Esqueleto className="h-32 w-full rounded-2xl" />
+                        </div>
+                    ) : productos.length === 0 ? (
+                        <div className="rounded-2xl border border-gray-200 bg-white">
+                            <EstadoVacio
+                                titulo="Aún no has registrado productos"
+                                descripcion="Usa el formulario de arriba para agregar el primero. Así el público sabrá qué ofreces en las ferias."
+                            />
+                        </div>
+                    ) : (
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            {productos.map((producto) => (
+                                <article
+                                    key={producto.id}
+                                    className={`flex gap-4 rounded-2xl border bg-white p-4 shadow-sm transition-shadow ${
+                                        editandoId === producto.id
+                                            ? "border-green-500 ring-2 ring-green-100"
+                                            : "border-gray-200"
+                                    }`}
+                                >
+                                    <div
+                                        className="h-20 w-20 shrink-0 rounded-xl bg-green-50 text-green-700 flex items-center justify-center text-2xl font-semibold"
+                                        aria-hidden="true"
+                                    >
+                                        {producto.nombre.charAt(0).toUpperCase()}
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <h4 className="font-semibold text-gray-900 truncate">{producto.nombre}</h4>
+                                            {producto.cantidad === 0 && <Insignia tono="rojo">Agotado</Insignia>}
+                                        </div>
+                                        <p className="text-lg font-semibold text-green-700">
+                                            ${formatearPrecio(producto.precio)}
+                                        </p>
+                                        <p className="text-sm text-gray-500">
+                                            {producto.cantidad}{" "}
+                                            {producto.cantidad === 1 ? "unidad disponible" : "unidades disponibles"}
+                                        </p>
+
+                                        <div className="mt-3 flex gap-2">
+                                            <Boton
+                                                variante="secundario"
+                                                tamano="sm"
+                                                onClick={() => iniciarEdicion(producto)}
+                                                aria-label={`Editar ${producto.nombre}`}
+                                            >
+                                                Editar
+                                            </Boton>
+                                            <Boton
+                                                variante="peligroSuave"
+                                                tamano="sm"
+                                                onClick={() => setProductoAEliminar(producto)}
+                                                aria-label={`Eliminar ${producto.nombre}`}
+                                            >
+                                                Eliminar
+                                            </Boton>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </PanelPestana>
+
+                <PanelPestana idBase="panel-artesano" id="solicitudes" activa={pestana}>
+                    <Tarjeta
+                        titulo="Mis solicitudes de participación"
+                        descripcion="Las pendientes aparecen primero. El administrador las revisa y las aprueba o las rechaza."
+                    >
+                        <Alerta tipo="error" className="mb-4">{errorSolicitudes}</Alerta>
+
+                        {cargandoSolicitudes ? (
+                            <div className="flex flex-col gap-3">
+                                <Esqueleto className="h-20 w-full rounded-xl" />
+                                <Esqueleto className="h-20 w-full rounded-xl" />
                             </div>
-                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${colorEstado(solicitud.estado)}`}>
-                                {solicitud.estado}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+                        ) : solicitudesOrdenadas.length === 0 ? (
+                            <EstadoVacio
+                                titulo="Aún no has solicitado participar en ninguna feria"
+                                descripcion="Explora las ediciones disponibles y envía tu primera solicitud."
+                                accion={
+                                    <Link
+                                        to="/ferias"
+                                        className="inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                                    >
+                                        Explorar ferias
+                                    </Link>
+                                }
+                            />
+                        ) : (
+                            <div className="flex flex-col gap-3">
+                                {solicitudesOrdenadas.map((solicitud) => {
+                                    const estado = ESTADOS_SOLICITUD[solicitud.estado];
+                                    const { titulo, detalle } = detalleEdicion(solicitud.idEdicionFeria);
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    {editandoId ? "Editar producto" : "Agregar producto"}
-                </h3>
-
-                <form onSubmit={manejarEnvio} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="sm:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                        <input
-                            type="text"
-                            name="nombre"
-                            value={formulario.nombre}
-                            onChange={manejarCambio}
-                            required
-                            className={campoClase}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-                        <input
-                            type="number"
-                            name="precio"
-                            value={formulario.precio}
-                            onChange={manejarCambio}
-                            required
-                            min="0"
-                            step="0.01"
-                            className={campoClase}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-                        <input
-                            type="number"
-                            name="cantidad"
-                            value={formulario.cantidad}
-                            onChange={manejarCambio}
-                            required
-                            min="0"
-                            className={campoClase}
-                        />
-                    </div>
-                    <div className="flex items-end gap-2">
-                        <button
-                            type="submit"
-                            disabled={guardando}
-                            className="flex-1 bg-green-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
-                        >
-                            {guardando ? "Guardando..." : editandoId ? "Actualizar" : "Agregar"}
-                        </button>
-                        {editandoId && (
-                            <button
-                                type="button"
-                                onClick={cancelarEdicion}
-                                className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
-                            >
-                                Cancelar
-                            </button>
+                                    return (
+                                        <article
+                                            key={solicitud.id}
+                                            className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-gray-100 bg-white p-4"
+                                        >
+                                            <div className="min-w-0">
+                                                <h4 className="font-semibold text-gray-900">{titulo}</h4>
+                                                <p className="text-sm text-gray-500">{detalle}</p>
+                                                <p className="mt-1 text-xs text-gray-400">
+                                                    Solicitada el {formatearFechaCorta(solicitud.fechaInscripcion)}
+                                                </p>
+                                            </div>
+                                            <div className="sm:text-right">
+                                                <Insignia tono={estado.tono}>{estado.texto}</Insignia>
+                                                <p className="mt-1 max-w-[14rem] text-xs text-gray-500">{estado.ayuda}</p>
+                                            </div>
+                                        </article>
+                                    );
+                                })}
+                            </div>
                         )}
-                    </div>
-                </form>
+                    </Tarjeta>
+                </PanelPestana>
+
+                <PanelPestana idBase="panel-artesano" id="perfil" activa={pestana}>
+                    <MiPerfil />
+                </PanelPestana>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis productos</h3>
-
-            {cargandoProductos && <p className="text-gray-500 text-sm">Cargando productos...</p>}
-
-            {!cargandoProductos && productos.length === 0 && (
-                <p className="text-gray-500 text-sm">Aún no has registrado productos.</p>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {productos.map((producto) => (
-                    <div key={producto.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-                        <h4 className="font-semibold text-gray-800 mb-1">{producto.nombre}</h4>
-                        <p className="text-sm text-gray-500">Precio: ${producto.precio}</p>
-                        <p className="text-sm text-gray-500 mb-3">Cantidad: {producto.cantidad}</p>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => iniciarEdicion(producto)}
-                                className="text-sm text-green-600 font-medium hover:underline"
-                            >
-                                Editar
-                            </button>
-                            <button
-                                onClick={() => manejarEliminar(producto.id)}
-                                className="text-sm text-red-600 font-medium hover:underline"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <ConfirmarDialogo
+                abierto={Boolean(productoAEliminar)}
+                titulo="¿Eliminar este producto?"
+                mensaje={
+                    productoAEliminar
+                        ? `Se eliminará "${productoAEliminar.nombre}" de tu catálogo. Esta acción no se puede deshacer.`
+                        : ""
+                }
+                textoConfirmar="Eliminar"
+                peligro
+                cargando={eliminando}
+                onConfirmar={confirmarEliminacion}
+                onCancelar={() => setProductoAEliminar(null)}
+            />
         </div>
     );
 }

@@ -7,3 +7,4 @@ export { default as EstadoVacio } from "./EstadoVacio";
 export { default as Esqueleto } from "./Esqueleto";
 export { default as ConfirmarDialogo } from "./ConfirmarDialogo";
 export { default as Spinner } from "./Spinner";
+export { default as Pestanas, PanelPestana } from "./Pestanas";

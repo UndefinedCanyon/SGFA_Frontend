@@ -4,6 +4,7 @@ const VARIANTES = {
     primario: "bg-green-600 text-white hover:bg-green-700 focus-visible:ring-green-600",
     secundario: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus-visible:ring-gray-400",
     peligro: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600",
+    peligroSuave: "text-red-700 hover:bg-red-50 focus-visible:ring-red-600",
     fantasma: "text-green-700 hover:bg-green-50 focus-visible:ring-green-600",
 };
 
