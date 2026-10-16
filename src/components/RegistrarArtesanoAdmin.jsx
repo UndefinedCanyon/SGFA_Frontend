@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { registrarArtesano } from "../services/api";
+import { Alerta, Boton, Campo } from "./ui";
 
 const FORMULARIO_VACIO = {
     nombre: "",
@@ -11,7 +12,7 @@ const FORMULARIO_VACIO = {
     descripcionCorta: "",
 };
 
-function RegistrarArtesanoAdmin({ onArtesanoCreado }) {
+function RegistrarArtesanoAdmin({ onCreado, onCerrar }) {
     const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState(null);
@@ -19,6 +20,7 @@ function RegistrarArtesanoAdmin({ onArtesanoCreado }) {
 
     function manejarCambio(evento) {
         const { name, value } = evento.target;
+        setMensaje(null);
         setFormulario((anterior) => ({ ...anterior, [name]: value }));
     }
 
@@ -34,7 +36,7 @@ function RegistrarArtesanoAdmin({ onArtesanoCreado }) {
                 `Artesano "${creado.nombreEmprendimiento}" registrado. Entrégale su correo y la contraseña inicial para que pueda iniciar sesión.`
             );
             setFormulario(FORMULARIO_VACIO);
-            if (onArtesanoCreado) await onArtesanoCreado();
+            if (onCreado) await onCreado();
         } catch (err) {
             setError(err.message);
         } finally {
@@ -42,71 +44,91 @@ function RegistrarArtesanoAdmin({ onArtesanoCreado }) {
         }
     }
 
-    const campoClase =
-        "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500";
-    const labelClase = "block text-sm font-medium text-gray-700 mb-1";
-
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Registrar artesano</h3>
+        <form
+            onSubmit={manejarEnvio}
+            className="mb-5 grid gap-4 rounded-xl border border-green-100 bg-green-50/50 p-4 sm:grid-cols-2"
+        >
+            <Campo
+                etiqueta="Nombre completo"
+                name="nombre"
+                value={formulario.nombre}
+                onChange={manejarCambio}
+                required
+                maxLength={100}
+                autoFocus
+            />
+            <Campo
+                etiqueta="Cédula"
+                name="cc"
+                value={formulario.cc}
+                onChange={manejarCambio}
+                required
+                maxLength={20}
+                inputMode="numeric"
+            />
 
-            {error && (
-                <p className="text-sm text-red-700 bg-red-50 rounded-lg p-3 mb-4">{error}</p>
-            )}
+            <Campo
+                etiqueta="Correo electrónico"
+                type="email"
+                name="correoElectronico"
+                value={formulario.correoElectronico}
+                onChange={manejarCambio}
+                required
+                maxLength={150}
+            />
+            <Campo
+                etiqueta="Contraseña inicial"
+                name="contrasena"
+                value={formulario.contrasena}
+                onChange={manejarCambio}
+                required
+                autoComplete="off"
+                ayuda="Se muestra para que puedas dársela al artesano."
+            />
 
-            <form onSubmit={manejarEnvio} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label className={labelClase}>Nombre completo</label>
-                    <input type="text" name="nombre" value={formulario.nombre}
-                        onChange={manejarCambio} required className={campoClase} />
-                </div>
-                <div>
-                    <label className={labelClase}>Cédula</label>
-                    <input type="text" name="cc" value={formulario.cc}
-                        onChange={manejarCambio} required className={campoClase} />
-                </div>
+            <Campo
+                etiqueta="Teléfono"
+                type="tel"
+                name="telefono"
+                value={formulario.telefono}
+                onChange={manejarCambio}
+                maxLength={20}
+            />
+            <Campo
+                etiqueta="Nombre del emprendimiento"
+                name="nombreEmprendimiento"
+                value={formulario.nombreEmprendimiento}
+                onChange={manejarCambio}
+                required
+                maxLength={150}
+            />
 
-                <div>
-                    <label className={labelClase}>Correo electrónico</label>
-                    <input type="email" name="correoElectronico" value={formulario.correoElectronico}
-                        onChange={manejarCambio} required className={campoClase} />
-                </div>
-                <div>
-                    <label className={labelClase}>Contraseña inicial</label>
-                    <input type="text" name="contrasena" value={formulario.contrasena}
-                        onChange={manejarCambio} required className={campoClase} />
-                </div>
+            <Campo
+                className="sm:col-span-2"
+                etiqueta="Descripción corta"
+                as="textarea"
+                name="descripcionCorta"
+                value={formulario.descripcionCorta}
+                onChange={manejarCambio}
+                rows={2}
+                maxLength={300}
+            />
 
-                <div>
-                    <label className={labelClase}>Teléfono</label>
-                    <input type="text" name="telefono" value={formulario.telefono}
-                        onChange={manejarCambio} className={campoClase} />
-                </div>
-                <div>
-                    <label className={labelClase}>Nombre del emprendimiento</label>
-                    <input type="text" name="nombreEmprendimiento" value={formulario.nombreEmprendimiento}
-                        onChange={manejarCambio} required className={campoClase} />
-                </div>
+            <Alerta tipo="error" className="sm:col-span-2">{error}</Alerta>
+            <Alerta tipo="exito" className="sm:col-span-2">{mensaje}</Alerta>
 
-                <div className="sm:col-span-2">
-                    <label className={labelClase}>Descripción corta</label>
-                    <textarea name="descripcionCorta" value={formulario.descripcionCorta}
-                        onChange={manejarCambio} rows={2} className={campoClase} />
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={guardando}
-                    className="sm:col-span-2 bg-green-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
-                >
+            <div className="flex flex-wrap gap-2 sm:col-span-2">
+                <Boton type="submit" cargando={guardando}>
                     {guardando ? "Registrando..." : "Registrar artesano"}
-                </button>
-            </form>
-
-            {mensaje && (
-                <p className="mt-4 text-sm text-green-700 bg-green-50 rounded-lg p-3">{mensaje}</p>
-            )}
-        </div>
+                </Boton>
+                {onCerrar && (
+                    <Boton variante="secundario" onClick={onCerrar}>
+                        Cerrar
+                    </Boton>
+                )}
+            </div>
+        </form>
     );
 }
 
