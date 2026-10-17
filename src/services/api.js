@@ -1,255 +1,197 @@
 const BASE_URL = import.meta.env.VITE_API_URL;
 
-async function manejarRespuesta(response) {
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.error || "Ocurrió un error inesperado.");
-    }
-    return data;
+const MENSAJE_RED = "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.";
+const MENSAJE_SERVIDOR = "Ocurrió un error en el servidor. Inténtalo de nuevo más tarde.";
+const MENSAJES_ESTADO = {
+    400: "Los datos enviados no son válidos.",
+    401: "Tu sesión expiró. Inicia sesión de nuevo.",
+    403: "No tienes permiso para realizar esta acción.",
+    404: "No encontramos lo que buscabas.",
+    409: "La acción entra en conflicto con los datos actuales.",
+};
+
+let alExpirarSesion = null;
+
+export function registrarManejadorSesionExpirada(manejador) {
+    alExpirarSesion = manejador;
 }
 
-function headersConToken(token) {
-    return {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-    };
-}
-
-export async function registrarArtesano(datosArtesano) {
-    const response = await fetch(`${BASE_URL}/artesanos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datosArtesano),
-    });
-    return manejarRespuesta(response);
-}
-
-export async function iniciarSesion(correoElectronico, contrasena) {
-    const response = await fetch(`${BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correoElectronico, contrasena }),
-    });
-    return manejarRespuesta(response);
-}
-
-export async function consultarFerias() {
-    const response = await fetch(`${BASE_URL}/ferias`);
-    return manejarRespuesta(response);
-}
-
-export async function consultarEdicionesFeria(idFeria) {
-    const url = idFeria
-        ? `${BASE_URL}/edicionesferia?idFeria=${idFeria}`
-        : `${BASE_URL}/edicionesferia`;
-    const response = await fetch(url);
-    return manejarRespuesta(response);
-}
-
-export async function crearFeria(nombreFeria, idAdmin, token) {
-    const response = await fetch(`${BASE_URL}/ferias`, {
-        method: "POST",
-        headers: headersConToken(token),
-        body: JSON.stringify({ nombreFeria, idAdmin }),
-    });
-    return manejarRespuesta(response);
-}
-
-export async function crearEdicionFeria(datosEdicion, token) {
-    const response = await fetch(`${BASE_URL}/edicionesferia`, {
-        method: "POST",
-        headers: headersConToken(token),
-        body: JSON.stringify(datosEdicion),
-    });
-    return manejarRespuesta(response);
-}
-
-export async function crearProducto(datosProducto, token) {
-    const response = await fetch(`${BASE_URL}/productos`, {
-        method: "POST",
-        headers: headersConToken(token),
-        body: JSON.stringify(datosProducto),
-    });
-    return manejarRespuesta(response);
-}
-
-export async function consultarMisProductos(token) {
-    const response = await fetch(`${BASE_URL}/productos`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
-    return manejarRespuesta(response);
-}
-
-export async function actualizarProducto(idProducto, datosProducto, token) {
-    const response = await fetch(`${BASE_URL}/productos/${idProducto}`, {
-        method: "PUT",
-        headers: headersConToken(token),
-        body: JSON.stringify(datosProducto),
-    });
-    return manejarRespuesta(response);
-}
-
-export async function eliminarProducto(idProducto, token) {
-    const response = await fetch(`${BASE_URL}/productos/${idProducto}`, {
-        method: "DELETE",
-        headers: headersConToken(token),
-    });
-    if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "No se pudo eliminar el producto.");
+async function leerCuerpo(response) {
+    const texto = await response.text();
+    if (!texto) return null;
+    try {
+        return JSON.parse(texto);
+    } catch {
+        return null;
     }
 }
 
-export async function solicitarParticipacion(idEdicionFeria, token) {
-    const response = await fetch(`${BASE_URL}/inscripciones`, {
-        method: "POST",
-        headers: headersConToken(token),
-        body: JSON.stringify({ idEdicionFeria }),
-    });
-    return manejarRespuesta(response);
-}
+async function solicitar(ruta, { metodo = "GET", cuerpo, token } = {}) {
+    const headers = {};
+    if (cuerpo !== undefined) headers["Content-Type"] = "application/json";
+    if (token) headers.Authorization = `Bearer ${token}`;
 
-export async function consultarMisSolicitudes(token) {
-    const response = await fetch(`${BASE_URL}/inscripciones/mias`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
-    return manejarRespuesta(response);
-}
-
-export async function consultarTodasLasSolicitudes(token) {
-    const response = await fetch(`${BASE_URL}/inscripciones`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
-    return manejarRespuesta(response);
-}
-
-export async function aprobarSolicitud(idInscripcion, token) {
-    const response = await fetch(`${BASE_URL}/inscripciones/${idInscripcion}/aprobar`, {
-        method: "PUT",
-        headers: headersConToken(token),
-    });
-    return manejarRespuesta(response);
-}
-
-export async function rechazarSolicitud(idInscripcion, token) {
-    const response = await fetch(`${BASE_URL}/inscripciones/${idInscripcion}/rechazar`, {
-        method: "PUT",
-        headers: headersConToken(token),
-    });
-    return manejarRespuesta(response);
-}
-
-export async function consultarTodosLosArtesanos(token) {
-    const response = await fetch(`${BASE_URL}/artesanos`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
-    return manejarRespuesta(response);
-}
-
-export async function consultarTodasLasFerias(token) {
-    const response = await fetch(`${BASE_URL}/ferias/todas`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
-    return manejarRespuesta(response);
-}
-
-export async function cambiarEstadoArtesano(idArtesano, activo, token) {
-    const response = await fetch(`${BASE_URL}/artesanos/${idArtesano}/estado`, {
-        method: "PUT",
-        headers: headersConToken(token),
-        body: JSON.stringify({ activo }),
-    });
-    if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "No se pudo cambiar el estado del artesano.");
+    let response;
+    try {
+        response = await fetch(`${BASE_URL}${ruta}`, {
+            method: metodo,
+            headers,
+            body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined,
+        });
+    } catch {
+        throw new Error(MENSAJE_RED);
     }
-}
 
-export async function cambiarEstadoFeria(idFeria, activo, token) {
-    const response = await fetch(`${BASE_URL}/ferias/${idFeria}/estado`, {
-        method: "PUT",
-        headers: headersConToken(token),
-        body: JSON.stringify({ activo }),
-    });
+    const datos = await leerCuerpo(response);
+
     if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "No se pudo cambiar el estado de la feria.");
+        // Un 401 en una petición CON token significa sesión vencida o inválida.
+        // Un 401 sin token (el login con credenciales incorrectas) no cuenta.
+        if (response.status === 401 && token && alExpirarSesion) {
+            alExpirarSesion();
+        }
+
+        throw new Error(
+            datos?.error ||
+                MENSAJES_ESTADO[response.status] ||
+                (response.status >= 500 ? MENSAJE_SERVIDOR : "Ocurrió un error inesperado.")
+        );
     }
+
+    return datos;
 }
 
-export async function consultarLugares() {
-    const response = await fetch(`${BASE_URL}/lugares`);
-    return manejarRespuesta(response);
+// ---------- Autenticación y registro ----------
+export function registrarArtesano(datosArtesano) {
+    return solicitar("/artesanos", { metodo: "POST", cuerpo: datosArtesano });
 }
 
-export async function crearLugar(nombre, direccion, token) {
-    const response = await fetch(`${BASE_URL}/lugares`, {
-        method: "POST",
-        headers: headersConToken(token),
-        body: JSON.stringify({ nombre, direccion }),
+export function iniciarSesion(correoElectronico, contrasena) {
+    return solicitar("/auth/login", {
+        metodo: "POST",
+        cuerpo: { correoElectronico, contrasena },
     });
-    return manejarRespuesta(response);
 }
 
-export async function consultarTodasLasEdiciones(token) {
-    const response = await fetch(`${BASE_URL}/edicionesferia/todas`, {
-        headers: { Authorization: `Bearer ${token}` },
+// ---------- Consultas públicas ----------
+export function consultarFerias() {
+    return solicitar("/ferias");
+}
+
+export function consultarEdicionesFeria(idFeria) {
+    return solicitar(idFeria ? `/edicionesferia?idFeria=${idFeria}` : "/edicionesferia");
+}
+
+export function consultarLugares() {
+    return solicitar("/lugares");
+}
+
+export function consultarParticipantes(idEdicion) {
+    return solicitar(`/edicionesferia/${idEdicion}/participantes`);
+}
+
+export function consultarOcupacion(idEdicion) {
+    return solicitar(`/edicionesferia/${idEdicion}/ocupacion`);
+}
+
+// ---------- Administrador ----------
+export function crearFeria(nombreFeria, idAdmin, token) {
+    return solicitar("/ferias", { metodo: "POST", cuerpo: { nombreFeria, idAdmin }, token });
+}
+
+export function actualizarFeria(idFeria, nombreFeria, token) {
+    return solicitar(`/ferias/${idFeria}`, { metodo: "PUT", cuerpo: { nombreFeria }, token });
+}
+
+export function consultarTodasLasFerias(token) {
+    return solicitar("/ferias/todas", { token });
+}
+
+export function cambiarEstadoFeria(idFeria, activo, token) {
+    return solicitar(`/ferias/${idFeria}/estado`, { metodo: "PUT", cuerpo: { activo }, token });
+}
+
+export function crearEdicionFeria(datosEdicion, token) {
+    return solicitar("/edicionesferia", { metodo: "POST", cuerpo: datosEdicion, token });
+}
+
+export function consultarTodasLasEdiciones(token) {
+    return solicitar("/edicionesferia/todas", { token });
+}
+
+export function cambiarEstadoEdicion(idEdicion, activo, token) {
+    return solicitar(`/edicionesferia/${idEdicion}/estado`, {
+        metodo: "PUT",
+        cuerpo: { activo },
+        token,
     });
-    return manejarRespuesta(response);
 }
 
-export async function cambiarEstadoEdicion(idEdicion, activo, token) {
-    const response = await fetch(`${BASE_URL}/edicionesferia/${idEdicion}/estado`, {
-        method: "PUT",
-        headers: headersConToken(token),
-        body: JSON.stringify({ activo }),
+export function configurarCupoEdicion(idEdicion, cupoMaximo, token) {
+    return solicitar(`/edicionesferia/${idEdicion}/cupo`, {
+        metodo: "PUT",
+        cuerpo: { cupoMaximo },
+        token,
     });
-    if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "No se pudo cambiar el estado de la edición.");
-    }
 }
 
-export async function consultarParticipantes(idEdicion) {
-    const response = await fetch(`${BASE_URL}/edicionesferia/${idEdicion}/participantes`);
-    return manejarRespuesta(response);
+export function crearLugar(nombre, direccion, token) {
+    return solicitar("/lugares", { metodo: "POST", cuerpo: { nombre, direccion }, token });
 }
 
-export async function consultarMiPerfil(token) {
-    const response = await fetch(`${BASE_URL}/artesanos/perfil`, {
-        headers: { Authorization: `Bearer ${token}` },
+export function consultarTodosLosArtesanos(token) {
+    return solicitar("/artesanos", { token });
+}
+
+export function cambiarEstadoArtesano(idArtesano, activo, token) {
+    return solicitar(`/artesanos/${idArtesano}/estado`, {
+        metodo: "PUT",
+        cuerpo: { activo },
+        token,
     });
-    return manejarRespuesta(response);
 }
 
-export async function actualizarMiPerfil(datos, token) {
-    const response = await fetch(`${BASE_URL}/artesanos/perfil`, {
-        method: "PUT",
-        headers: headersConToken(token),
-        body: JSON.stringify(datos),
-    });
-    return manejarRespuesta(response);
+export function consultarTodasLasSolicitudes(token) {
+    return solicitar("/inscripciones", { token });
 }
 
-export async function actualizarFeria(idFeria, nombreFeria, token) {
-    const response = await fetch(`${BASE_URL}/ferias/${idFeria}`, {
-        method: "PUT",
-        headers: headersConToken(token),
-        body: JSON.stringify({ nombreFeria }),
-    });
-    return manejarRespuesta(response);
+export function aprobarSolicitud(idInscripcion, token) {
+    return solicitar(`/inscripciones/${idInscripcion}/aprobar`, { metodo: "PUT", token });
 }
 
-export async function consultarOcupacion(idEdicion) {
-    const response = await fetch(`${BASE_URL}/edicionesferia/${idEdicion}/ocupacion`);
-    return manejarRespuesta(response);
+export function rechazarSolicitud(idInscripcion, token) {
+    return solicitar(`/inscripciones/${idInscripcion}/rechazar`, { metodo: "PUT", token });
 }
 
-export async function configurarCupoEdicion(idEdicion, cupoMaximo, token) {
-    const response = await fetch(`${BASE_URL}/edicionesferia/${idEdicion}/cupo`, {
-        method: "PUT",
-        headers: headersConToken(token),
-        body: JSON.stringify({ cupoMaximo }),
-    });
-    return manejarRespuesta(response);
+// ---------- Artesano ----------
+export function consultarMiPerfil(token) {
+    return solicitar("/artesanos/perfil", { token });
+}
+
+export function actualizarMiPerfil(datos, token) {
+    return solicitar("/artesanos/perfil", { metodo: "PUT", cuerpo: datos, token });
+}
+
+export function consultarMisProductos(token) {
+    return solicitar("/productos", { token });
+}
+
+export function crearProducto(datosProducto, token) {
+    return solicitar("/productos", { metodo: "POST", cuerpo: datosProducto, token });
+}
+
+export function actualizarProducto(idProducto, datosProducto, token) {
+    return solicitar(`/productos/${idProducto}`, { metodo: "PUT", cuerpo: datosProducto, token });
+}
+
+export function eliminarProducto(idProducto, token) {
+    return solicitar(`/productos/${idProducto}`, { metodo: "DELETE", token });
+}
+
+export function solicitarParticipacion(idEdicionFeria, token) {
+    return solicitar("/inscripciones", { metodo: "POST", cuerpo: { idEdicionFeria }, token });
+}
+
+export function consultarMisSolicitudes(token) {
+    return solicitar("/inscripciones/mias", { token });
 }
