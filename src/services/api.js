@@ -135,8 +135,12 @@ export function configurarCupoEdicion(idEdicion, cupoMaximo, token) {
     });
 }
 
-export function crearLugar(nombre, direccion, token) {
-    return solicitar("/lugares", { metodo: "POST", cuerpo: { nombre, direccion }, token });
+export function crearLugar(datos, token) {
+    return solicitar("/lugares", { metodo: "POST", cuerpo: datos, token });
+}
+
+export function actualizarLugar(idLugar, datos, token) {
+    return solicitar(`/lugares/${idLugar}`, { metodo: "PUT", cuerpo: datos, token });
 }
 
 export function consultarTodosLosArtesanos(token) {

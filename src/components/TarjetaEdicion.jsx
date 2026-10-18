@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Alerta, Boton, Esqueleto, Insignia } from "./ui";
 import BarraCupo from "./BarraCupo";
+import UbicacionLugar from "./UbicacionLugar";
 import { estadoEdicion, formatearFechaCorta, formatearPrecio } from "../utils/helpers";
 
 const ETIQUETAS = {
@@ -116,6 +117,7 @@ function TarjetaEdicion({
                                 {lugar?.direccion && (
                                     <p className="text-xs text-gray-500">{lugar.direccion}</p>
                                 )}
+                                <UbicacionLugar lugar={lugar} />
                             </div>
                         </div>
                     </div>
