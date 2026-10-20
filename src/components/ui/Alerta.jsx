@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useAvisos } from "../../context/AvisosContext";
+
 const TIPOS = {
     exito: "bg-green-50 text-green-800 border-green-200",
     error: "bg-red-50 text-red-800 border-red-200",
@@ -6,7 +9,20 @@ const TIPOS = {
 };
 
 function Alerta({ tipo = "info", className = "", children }) {
-    if (!children) return null;
+    const avisos = useAvisos();
+    const mostrar = avisos?.mostrar;
+
+    // Los éxitos de los paneles se muestran como aviso flotante. Los errores y avisos se quedan
+    // en la página, junto a lo que hay que corregir.
+    const comoAviso = Boolean(avisos) && tipo === "exito" && typeof children === "string";
+
+    useEffect(() => {
+        if (comoAviso && children) {
+            mostrar("exito", children);
+        }
+    }, [comoAviso, children, mostrar]);
+
+    if (!children || comoAviso) return null;
 
     return (
         <div

@@ -11,6 +11,7 @@ import PanelAdministrador from "../pages/PanelAdministrador";
 import PanelArtesano from "../pages/PanelArtesano";
 import NoEncontrado from "../pages/NoEncontrado";
 import RutaProtegida from "./RutaProtegida";
+import { ProveedorAvisos } from "../context/AvisosContext";
 
 function AppRoutes() {
     return (
@@ -29,7 +30,9 @@ function AppRoutes() {
                         path="/admin"
                         element={
                             <RutaProtegida rolPermitido="ADMINISTRADOR">
-                                <PanelAdministrador />
+                                <ProveedorAvisos>
+                                    <PanelAdministrador />
+                                </ProveedorAvisos>
                             </RutaProtegida>
                         }
                     />
@@ -38,7 +41,9 @@ function AppRoutes() {
                         path="/mi-panel"
                         element={
                             <RutaProtegida rolPermitido="ARTESANO">
-                                <PanelArtesano />
+                                <ProveedorAvisos>
+                                    <PanelArtesano />
+                                </ProveedorAvisos>
                             </RutaProtegida>
                         }
                     />
