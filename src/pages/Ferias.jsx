@@ -26,6 +26,7 @@ function Ferias() {
     const [ocupaciones, setOcupaciones] = useState({});
     const [misSolicitudes, setMisSolicitudes] = useState({});
     const [cargando, setCargando] = useState(true);
+    const [errorCarga, setErrorCarga] = useState(null);
     const [error, setError] = useState(null);
 
     const [busqueda, setBusqueda] = useState("");
@@ -38,37 +39,41 @@ function Ferias() {
     const [participantes, setParticipantes] = useState([]);
     const [cargandoParticipantes, setCargandoParticipantes] = useState(false);
 
-    useEffect(() => {
-        async function cargar() {
-            try {
-                const [datosFerias, datosEdiciones, datosLugares] = await Promise.all([
-                    consultarFerias(),
-                    consultarEdicionesFeria(),
-                    consultarLugares(),
-                ]);
+    async function cargar() {
+        setCargando(true);
+        setErrorCarga(null);
 
-                const idsFerias = new Set(datosFerias.map((f) => f.id));
-                const visibles = datosEdiciones.filter((e) => idsFerias.has(e.idFeria));
+        try {
+            const [datosFerias, datosEdiciones, datosLugares] = await Promise.all([
+                consultarFerias(),
+                consultarEdicionesFeria(),
+                consultarLugares(),
+            ]);
 
-                const listaOcupaciones = await Promise.all(
-                    visibles.map((edicion) => consultarOcupacion(edicion.id))
-                );
-                const mapa = {};
-                visibles.forEach((edicion, i) => {
-                    mapa[edicion.id] = listaOcupaciones[i];
-                });
+            const idsFerias = new Set(datosFerias.map((f) => f.id));
+            const visibles = datosEdiciones.filter((e) => idsFerias.has(e.idFeria));
 
-                setFerias(datosFerias);
-                setEdiciones(visibles);
-                setLugares(datosLugares);
-                setOcupaciones(mapa);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setCargando(false);
-            }
+            // Si el cupo de una edición falla, esa tarjeta se muestra sin barra y la página sigue.
+            const listaOcupaciones = await Promise.all(
+                visibles.map((edicion) => consultarOcupacion(edicion.id).catch(() => null))
+            );
+            const mapa = {};
+            visibles.forEach((edicion, i) => {
+                mapa[edicion.id] = listaOcupaciones[i];
+            });
+
+            setFerias(datosFerias);
+            setEdiciones(visibles);
+            setLugares(datosLugares);
+            setOcupaciones(mapa);
+        } catch (err) {
+            setErrorCarga(err.message);
+        } finally {
+            setCargando(false);
         }
+    }
 
+    useEffect(() => {
         cargar();
     }, []);
 
@@ -198,93 +203,105 @@ function Ferias() {
 
             <Alerta tipo="error" className="mb-6">{error}</Alerta>
 
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-6">
-                <div className="grid gap-4 md:grid-cols-[1fr_12rem_12rem]">
-                    <Campo
-                        etiqueta="Buscar"
-                        type="search"
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                        placeholder="Nombre de la feria o del lugar"
-                    />
-                    <Campo
-                        etiqueta="Estado"
-                        as="select"
-                        value={filtroEstado}
-                        onChange={(e) => setFiltroEstado(e.target.value)}
-                    >
-                        {OPCIONES_ESTADO.map((opcion) => (
-                            <option key={opcion.valor} value={opcion.valor}>{opcion.texto}</option>
-                        ))}
-                    </Campo>
-                    <Campo
-                        etiqueta="Fecha de realización"
-                        type="date"
-                        value={fecha}
-                        onChange={(e) => setFecha(e.target.value)}
-                    />
-                </div>
-
-                {hayFiltros && (
-                    <div className="mt-3 flex justify-end">
-                        <Boton variante="fantasma" tamano="sm" onClick={limpiarFiltros}>
-                            Limpiar filtros
-                        </Boton>
-                    </div>
-                )}
-            </div>
-
-            {!cargando && (
-                <p className="text-sm font-semibold text-gray-800 mb-3" aria-live="polite">
-                    {tarjetas.length} {tarjetas.length === 1 ? "resultado" : "resultados"}
-                </p>
-            )}
-
-            {cargando ? (
-                <div className="flex flex-col gap-4">
-                    <Esqueleto className="h-44 w-full rounded-2xl" />
-                    <Esqueleto className="h-44 w-full rounded-2xl" />
-                    <Esqueleto className="h-44 w-full rounded-2xl" />
-                </div>
-            ) : tarjetas.length === 0 ? (
+            {errorCarga ? (
                 <div className="bg-white rounded-2xl border border-gray-200">
                     <EstadoVacio
-                        titulo={hayFiltros ? "No encontramos resultados" : "Aún no hay ferias publicadas"}
-                        descripcion={
-                            hayFiltros
-                                ? "Prueba con otra búsqueda o cambia los filtros."
-                                : "Cuando el administrador cree una feria, aparecerá aquí."
-                        }
-                        accion={
-                            hayFiltros ? (
-                                <Boton variante="secundario" onClick={limpiarFiltros}>
-                                    Limpiar filtros
-                                </Boton>
-                            ) : null
-                        }
+                        titulo="No pudimos cargar las ferias"
+                        descripcion={errorCarga}
+                        accion={<Boton onClick={cargar}>Reintentar</Boton>}
                     />
                 </div>
             ) : (
-                <div className="flex flex-col gap-4">
-                    {tarjetas.map((item) => (
-                        <TarjetaEdicion
-                            key={item.edicion ? `edicion-${item.edicion.id}` : `feria-${item.feria.id}`}
-                            feria={item.feria}
-                            edicion={item.edicion}
-                            lugar={item.lugar}
-                            ocupacion={item.edicion ? ocupaciones[item.edicion.id] : null}
-                            rolUsuario={usuario?.rol}
-                            estadoSolicitud={item.edicion ? misSolicitudes[item.edicion.id] : null}
-                            solicitando={item.edicion ? solicitandoId === item.edicion.id : false}
-                            aviso={item.edicion ? avisos[item.edicion.id] : null}
-                            abierta={item.edicion ? abiertaId === item.edicion.id : false}
-                            participantes={participantes}
-                            cargandoParticipantes={cargandoParticipantes}
-                            onSolicitar={() => manejarSolicitud(item.edicion.id)}
-                            onAlternar={() => alternarParticipantes(item.edicion.id)}
-                        />
-                    ))}
-                </div>
+                <>
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-6">
+                        <div className="grid gap-4 md:grid-cols-[1fr_12rem_12rem]">
+                            <Campo
+                                etiqueta="Buscar"
+                                type="search"
+                                value={busqueda}
+                                onChange={(e) => setBusqueda(e.target.value)}
+                                placeholder="Nombre de la feria o del lugar"
+                            />
+                            <Campo
+                                etiqueta="Estado"
+                                as="select"
+                                value={filtroEstado}
+                                onChange={(e) => setFiltroEstado(e.target.value)}
+                            >
+                                {OPCIONES_ESTADO.map((opcion) => (
+                                    <option key={opcion.valor} value={opcion.valor}>{opcion.texto}</option>
+                                ))}
+                            </Campo>
+                            <Campo
+                                etiqueta="Fecha de realización"
+                                type="date"
+                                value={fecha}
+                                onChange={(e) => setFecha(e.target.value)}
+                            />
+                        </div>
+
+                        {hayFiltros && (
+                            <div className="mt-3 flex justify-end">
+                                <Boton variante="fantasma" tamano="sm" onClick={limpiarFiltros}>
+                                    Limpiar filtros
+                                </Boton>
+                            </div>
+                        )}
+                    </div>
+
+                    {!cargando && (
+                        <p className="text-sm font-semibold text-gray-800 mb-3" aria-live="polite">
+                            {tarjetas.length} {tarjetas.length === 1 ? "resultado" : "resultados"}
+                        </p>
+                    )}
+
+                    {cargando ? (
+                        <div className="flex flex-col gap-4">
+                            <Esqueleto className="h-44 w-full rounded-2xl" />
+                            <Esqueleto className="h-44 w-full rounded-2xl" />
+                            <Esqueleto className="h-44 w-full rounded-2xl" />
+                        </div>
+                    ) : tarjetas.length === 0 ? (
+                        <div className="bg-white rounded-2xl border border-gray-200">
+                            <EstadoVacio
+                                titulo={hayFiltros ? "No encontramos resultados" : "Aún no hay ferias publicadas"}
+                                descripcion={
+                                    hayFiltros
+                                        ? "Prueba con otra búsqueda o cambia los filtros."
+                                        : "Cuando el administrador cree una feria, aparecerá aquí."
+                                }
+                                accion={
+                                    hayFiltros ? (
+                                        <Boton variante="secundario" onClick={limpiarFiltros}>
+                                            Limpiar filtros
+                                        </Boton>
+                                    ) : null
+                                }
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            {tarjetas.map((item) => (
+                                <TarjetaEdicion
+                                    key={item.edicion ? `edicion-${item.edicion.id}` : `feria-${item.feria.id}`}
+                                    feria={item.feria}
+                                    edicion={item.edicion}
+                                    lugar={item.lugar}
+                                    ocupacion={item.edicion ? ocupaciones[item.edicion.id] : null}
+                                    rolUsuario={usuario?.rol}
+                                    estadoSolicitud={item.edicion ? misSolicitudes[item.edicion.id] : null}
+                                    solicitando={item.edicion ? solicitandoId === item.edicion.id : false}
+                                    aviso={item.edicion ? avisos[item.edicion.id] : null}
+                                    abierta={item.edicion ? abiertaId === item.edicion.id : false}
+                                    participantes={participantes}
+                                    cargandoParticipantes={cargandoParticipantes}
+                                    onSolicitar={() => manejarSolicitud(item.edicion.id)}
+                                    onAlternar={() => alternarParticipantes(item.edicion.id)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

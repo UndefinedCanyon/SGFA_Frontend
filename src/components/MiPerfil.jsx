@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { consultarMiPerfil, actualizarMiPerfil } from "../services/api";
+import {
+    consultarMiPerfil, actualizarMiPerfil, subirLogoArtesano, quitarLogoArtesano,
+} from "../services/api";
 import { Alerta, Boton, Campo, Esqueleto, Tarjeta } from "./ui";
+import SelectorImagen from "./SelectorImagen";
 
 function aFormulario(datos) {
     return {
@@ -21,6 +24,7 @@ function MiPerfil() {
     const [cargando, setCargando] = useState(true);
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState(null);
+    const [errorLogo, setErrorLogo] = useState(null);
     const [mensaje, setMensaje] = useState(null);
 
     useEffect(() => {
@@ -66,13 +70,21 @@ function MiPerfil() {
         }
     }
 
+    async function subirLogo(archivo) {
+        setPerfil(await subirLogoArtesano(archivo, usuario.token));
+    }
+
+    async function quitarLogo() {
+        setPerfil(await quitarLogoArtesano(usuario.token));
+    }
+
     const hayCambios =
         formulario !== null && JSON.stringify(formulario) !== JSON.stringify(guardado);
 
     return (
         <Tarjeta
             titulo="Mi perfil"
-            descripcion="El nombre del emprendimiento y la descripción se muestran al público en las ferias en las que participas."
+            descripcion="El nombre del emprendimiento, la descripción y el logo se muestran al público en las ferias en las que participas."
         >
             {cargando && (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -87,6 +99,25 @@ function MiPerfil() {
 
             {perfil && formulario && (
                 <form onSubmit={manejarEnvio} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2 flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                        <SelectorImagen
+                            imagen={perfil.logo}
+                            nombre={perfil.nombreEmprendimiento}
+                            redonda
+                            onSubir={subirLogo}
+                            onQuitar={quitarLogo}
+                            onError={setErrorLogo}
+                        />
+                        <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-800">Logo de tu emprendimiento</p>
+                            <p className="text-xs text-gray-500">
+                                JPG, PNG o WebP. Si la imagen es muy grande, se reduce automáticamente.
+                                El logo se guarda al subirlo, sin pulsar "Guardar cambios".
+                            </p>
+                            <Alerta tipo="error" className="mt-2">{errorLogo}</Alerta>
+                        </div>
+                    </div>
+
                     <Campo
                         etiqueta="Correo electrónico"
                         value={perfil.correoElectronico}

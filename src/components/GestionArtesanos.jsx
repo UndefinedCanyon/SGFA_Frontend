@@ -6,6 +6,7 @@ import {
     Alerta, Boton, Campo, ConfirmarDialogo, EstadoVacio, Esqueleto, Insignia, Tarjeta,
 } from "./ui";
 import RegistrarArtesanoAdmin from "./RegistrarArtesanoAdmin";
+import Miniatura from "./Miniatura";
 
 const OPCIONES = [
     { valor: "TODOS", texto: "Todos" },
@@ -146,12 +147,12 @@ function GestionArtesanos({ artesanos, cargando, onCambio }) {
                                 }`}
                             >
                                 <div className="flex min-w-0 items-center gap-3">
-                                    <div
-                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 font-semibold text-green-700"
-                                        aria-hidden="true"
-                                    >
-                                        {artesano.nombreEmprendimiento.charAt(0).toUpperCase()}
-                                    </div>
+                                    <Miniatura
+                                        imagen={artesano.logo}
+                                        nombre={artesano.nombreEmprendimiento}
+                                        redonda
+                                        className="h-10 w-10 text-base"
+                                    />
                                     <div className="min-w-0">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <p className="truncate font-medium text-gray-900">

@@ -8,6 +8,7 @@ const MENSAJES_ESTADO = {
     403: "No tienes permiso para realizar esta acción.",
     404: "No encontramos lo que buscabas.",
     409: "La acción entra en conflicto con los datos actuales.",
+    413: "La imagen es demasiado pesada.",
 };
 
 let alExpirarSesion = null;
@@ -26,7 +27,7 @@ async function leerCuerpo(response) {
     }
 }
 
-async function solicitar(ruta, { metodo = "GET", cuerpo, token } = {}) {
+async function solicitar(ruta, { metodo = "GET", cuerpo, formulario, token } = {}) {
     const headers = {};
     if (cuerpo !== undefined) headers["Content-Type"] = "application/json";
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -36,7 +37,8 @@ async function solicitar(ruta, { metodo = "GET", cuerpo, token } = {}) {
         response = await fetch(`${BASE_URL}${ruta}`, {
             method: metodo,
             headers,
-            body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined,
+            // Con FormData el navegador agrega solo el Content-Type, con su separador.
+            body: formulario ?? (cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined),
         });
     } catch {
         throw new Error(MENSAJE_RED);
@@ -198,4 +200,35 @@ export function solicitarParticipacion(idEdicionFeria, token) {
 
 export function consultarMisSolicitudes(token) {
     return solicitar("/inscripciones/mias", { token });
+}
+
+// ---------- Imágenes ----------
+function formularioConArchivo(archivo) {
+    const formulario = new FormData();
+    formulario.append("archivo", archivo);
+    return formulario;
+}
+
+export function subirImagenProducto(idProducto, archivo, token) {
+    return solicitar(`/productos/${idProducto}/imagen`, {
+        metodo: "PUT",
+        formulario: formularioConArchivo(archivo),
+        token,
+    });
+}
+
+export function quitarImagenProducto(idProducto, token) {
+    return solicitar(`/productos/${idProducto}/imagen`, { metodo: "DELETE", token });
+}
+
+export function subirLogoArtesano(archivo, token) {
+    return solicitar("/artesanos/perfil/logo", {
+        metodo: "PUT",
+        formulario: formularioConArchivo(archivo),
+        token,
+    });
+}
+
+export function quitarLogoArtesano(token) {
+    return solicitar("/artesanos/perfil/logo", { metodo: "DELETE", token });
 }

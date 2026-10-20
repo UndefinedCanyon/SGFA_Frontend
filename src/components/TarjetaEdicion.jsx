@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Alerta, Boton, Esqueleto, Insignia } from "./ui";
 import BarraCupo from "./BarraCupo";
 import UbicacionLugar from "./UbicacionLugar";
+import Miniatura from "./Miniatura";
 import { estadoEdicion, formatearFechaCorta, formatearPrecio } from "../utils/helpers";
 
 const ETIQUETAS = {
@@ -189,12 +190,12 @@ function TarjetaEdicion({
                                 key={participante.id}
                                 className="flex gap-3 rounded-xl border border-gray-100 bg-white p-4"
                             >
-                                <div
-                                    className="h-12 w-12 shrink-0 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-lg font-semibold"
-                                    aria-hidden="true"
-                                >
-                                    {participante.nombreEmprendimiento.charAt(0).toUpperCase()}
-                                </div>
+                                <Miniatura
+                                    imagen={participante.logo}
+                                    nombre={participante.nombreEmprendimiento}
+                                    redonda
+                                    className="h-12 w-12 text-lg"
+                                />
 
                                 <div className="min-w-0 flex-1">
                                     <h5 className="font-semibold text-gray-900 truncate">
@@ -213,10 +214,15 @@ function TarjetaEdicion({
                                             {participante.productos.map((producto) => (
                                                 <li
                                                     key={producto.id}
-                                                    className="flex justify-between gap-2 text-sm text-gray-600"
+                                                    className="flex items-center gap-2 text-sm text-gray-600"
                                                 >
-                                                    <span className="truncate">{producto.nombre}</span>
-                                                    <span className="text-gray-500 shrink-0">
+                                                    <Miniatura
+                                                        imagen={producto.imagen}
+                                                        nombre={producto.nombre}
+                                                        className="h-10 w-10 text-sm"
+                                                    />
+                                                    <span className="min-w-0 flex-1 truncate">{producto.nombre}</span>
+                                                    <span className="shrink-0 text-gray-500">
                                                         ${formatearPrecio(producto.precio)}
                                                     </span>
                                                 </li>

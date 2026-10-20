@@ -4,13 +4,16 @@ import { useAuth } from "../context/AuthContext";
 import {
     consultarMisProductos, crearProducto, actualizarProducto, eliminarProducto,
     consultarMisSolicitudes, consultarFerias, consultarEdicionesFeria, consultarLugares,
+    subirImagenProducto, quitarImagenProducto,
 } from "../services/api";
 import { formatearFechaCorta, formatearPrecio } from "../utils/helpers";
+import { prepararImagen } from "../utils/imagenes";
 import {
     Alerta, Boton, Campo, ConfirmarDialogo, EstadoVacio, Esqueleto,
     Insignia, Pestanas, PanelPestana, Tarjeta,
 } from "../components/ui";
 import MiPerfil from "../components/MiPerfil";
+import SelectorImagen from "../components/SelectorImagen";
 
 const FORMULARIO_VACIO = { nombre: "", precio: "", cantidad: "" };
 
@@ -42,8 +45,11 @@ function PanelArtesano() {
     const [cargandoProductos, setCargandoProductos] = useState(true);
     const [errorProductos, setErrorProductos] = useState(null);
     const [mensajeProductos, setMensajeProductos] = useState(null);
+    const [errorFoto, setErrorFoto] = useState(null);
 
     const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
+    const [archivoFoto, setArchivoFoto] = useState(null);
+    const [claveFoto, setClaveFoto] = useState(0);
     const [editandoId, setEditandoId] = useState(null);
     const [guardando, setGuardando] = useState(false);
     const formularioRef = useRef(null);
@@ -109,6 +115,8 @@ function PanelArtesano() {
     function reiniciarFormulario() {
         setEditandoId(null);
         setFormulario(FORMULARIO_VACIO);
+        setArchivoFoto(null);
+        setClaveFoto((clave) => clave + 1);
     }
 
     function iniciarEdicion(producto) {
@@ -141,8 +149,20 @@ function PanelArtesano() {
                 await actualizarProducto(editandoId, datos, usuario.token);
                 setMensajeProductos(`Producto "${datos.nombre}" actualizado.`);
             } else {
-                await crearProducto(datos, usuario.token);
+                const creado = await crearProducto(datos, usuario.token);
                 setMensajeProductos(`Producto "${datos.nombre}" agregado a tu catálogo.`);
+
+                if (archivoFoto) {
+                    try {
+                        const preparada = await prepararImagen(archivoFoto);
+                        await subirImagenProducto(creado.id, preparada, usuario.token);
+                    } catch (err) {
+                        setMensajeProductos(null);
+                        setErrorProductos(
+                            `El producto se agregó, pero no se pudo subir la foto: ${err.message} Puedes subirla desde su tarjeta.`
+                        );
+                    }
+                }
             }
             reiniciarFormulario();
             await cargarProductos();
@@ -170,6 +190,16 @@ function PanelArtesano() {
             setEliminando(false);
             setProductoAEliminar(null);
         }
+    }
+
+    async function subirFotoProducto(idProducto, archivo) {
+        await subirImagenProducto(idProducto, archivo, usuario.token);
+        await cargarProductos();
+    }
+
+    async function quitarFotoProducto(idProducto) {
+        await quitarImagenProducto(idProducto, usuario.token);
+        await cargarProductos();
     }
 
     function detalleEdicion(idEdicion) {
@@ -243,11 +273,11 @@ function PanelArtesano() {
                             titulo={editandoId ? "Editar producto" : "Agregar producto"}
                             descripcion={
                                 editandoId
-                                    ? "Modifica los datos y guarda los cambios."
+                                    ? "Modifica los datos y guarda los cambios. La foto se cambia desde la tarjeta del producto."
                                     : "Los productos que registres se muestran al público cuando tu participación sea aprobada."
                             }
                         >
-                            <form onSubmit={manejarEnvio} className="grid grid-cols-1 sm:grid-cols-6 gap-4 items-end">
+                            <form onSubmit={manejarEnvio} className="grid grid-cols-1 sm:grid-cols-6 gap-4">
                                 <Campo
                                     className="sm:col-span-6"
                                     etiqueta="Nombre del producto"
@@ -258,7 +288,7 @@ function PanelArtesano() {
                                     maxLength={150}
                                 />
                                 <Campo
-                                    className="sm:col-span-2"
+                                    className="sm:col-span-3"
                                     etiqueta="Precio (COP)"
                                     type="number"
                                     name="precio"
@@ -270,7 +300,7 @@ function PanelArtesano() {
                                     inputMode="decimal"
                                 />
                                 <Campo
-                                    className="sm:col-span-2"
+                                    className="sm:col-span-3"
                                     etiqueta="Cantidad disponible"
                                     type="number"
                                     name="cantidad"
@@ -281,8 +311,21 @@ function PanelArtesano() {
                                     step="1"
                                     inputMode="numeric"
                                 />
-                                <div className="sm:col-span-2 flex gap-2">
-                                    <Boton type="submit" cargando={guardando} className="flex-1">
+
+                                {!editandoId && (
+                                    <Campo
+                                        key={claveFoto}
+                                        className="sm:col-span-6"
+                                        etiqueta="Foto (opcional)"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        onChange={(e) => setArchivoFoto(e.target.files?.[0] ?? null)}
+                                        ayuda="JPG, PNG o WebP. Si es muy grande, se reduce automáticamente."
+                                    />
+                                )}
+
+                                <div className="sm:col-span-6 flex gap-2">
+                                    <Boton type="submit" cargando={guardando}>
                                         {guardando ? "Guardando..." : editandoId ? "Actualizar" : "Agregar"}
                                     </Boton>
                                     {editandoId && (
@@ -299,6 +342,7 @@ function PanelArtesano() {
                     </div>
 
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Mi catálogo</h3>
+                    <Alerta tipo="error" className="mb-3">{errorFoto}</Alerta>
 
                     {cargandoProductos ? (
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -323,12 +367,13 @@ function PanelArtesano() {
                                             : "border-gray-200"
                                     }`}
                                 >
-                                    <div
-                                        className="h-20 w-20 shrink-0 rounded-xl bg-green-50 text-green-700 flex items-center justify-center text-2xl font-semibold"
-                                        aria-hidden="true"
-                                    >
-                                        {producto.nombre.charAt(0).toUpperCase()}
-                                    </div>
+                                    <SelectorImagen
+                                        imagen={producto.imagen}
+                                        nombre={producto.nombre}
+                                        onSubir={(archivo) => subirFotoProducto(producto.id, archivo)}
+                                        onQuitar={() => quitarFotoProducto(producto.id)}
+                                        onError={setErrorFoto}
+                                    />
 
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-start justify-between gap-2">
@@ -433,7 +478,7 @@ function PanelArtesano() {
                 titulo="¿Eliminar este producto?"
                 mensaje={
                     productoAEliminar
-                        ? `Se eliminará "${productoAEliminar.nombre}" de tu catálogo. Esta acción no se puede deshacer.`
+                        ? `Se eliminará "${productoAEliminar.nombre}" de tu catálogo, con su foto. Esta acción no se puede deshacer.`
                         : ""
                 }
                 textoConfirmar="Eliminar"
