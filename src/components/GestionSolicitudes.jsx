@@ -70,10 +70,10 @@ function GestionSolicitudes({
         try {
             if (accion === "aprobar") {
                 await aprobarSolicitud(solicitud.id, usuario.token);
-                setMensaje(`Solicitud de "${nombre}" aprobada.`);
+                setMensaje(`Solicitud de "${nombre}" aprobada. El artesano recibirá un aviso por correo.`);
             } else {
                 await rechazarSolicitud(solicitud.id, usuario.token);
-                setMensaje(`Solicitud de "${nombre}" rechazada.`);
+                setMensaje(`Solicitud de "${nombre}" rechazada. El artesano recibirá un aviso por correo.`);
             }
             await onCambio();
         } catch (err) {
@@ -273,7 +273,7 @@ function GestionSolicitudes({
                 titulo="¿Cambiar a rechazada?"
                 mensaje={
                     aRechazar
-                        ? `Se rechazará la solicitud ya aprobada de "${nombreEmprendimiento(aRechazar.idArtesano)}". Su cupo quedará libre y dejará de aparecer como participante.`
+                        ? `Se rechazará la solicitud ya aprobada de "${nombreEmprendimiento(aRechazar.idArtesano)}". Su cupo quedará libre, dejará de aparecer como participante y recibirá un aviso por correo.`
                         : ""
                 }
                 textoConfirmar="Rechazar"
