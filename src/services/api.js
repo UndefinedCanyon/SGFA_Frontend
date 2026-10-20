@@ -53,11 +53,13 @@ async function solicitar(ruta, { metodo = "GET", cuerpo, formulario, token } = {
             alExpirarSesion();
         }
 
-        throw new Error(
+        const error = new Error(
             datos?.error ||
                 MENSAJES_ESTADO[response.status] ||
                 (response.status >= 500 ? MENSAJE_SERVIDOR : "Ocurrió un error inesperado.")
         );
+        error.codigo = datos?.codigo ?? null;
+        throw error;
     }
 
     return datos;
@@ -231,4 +233,34 @@ export function subirLogoArtesano(archivo, token) {
 
 export function quitarLogoArtesano(token) {
     return solicitar("/artesanos/perfil/logo", { metodo: "DELETE", token });
+}
+
+// ---------- Confirmación de cuenta y recuperación de contraseña ----------
+export function verificarCorreo(token) {
+    return solicitar("/auth/verificar-correo", { metodo: "POST", cuerpo: { token } });
+}
+
+export function reenviarVerificacion(correoElectronico) {
+    return solicitar("/auth/reenviar-verificacion", {
+        metodo: "POST",
+        cuerpo: { correoElectronico },
+    });
+}
+
+export function solicitarRecuperacion(correoElectronico) {
+    return solicitar("/auth/olvide-contrasena", {
+        metodo: "POST",
+        cuerpo: { correoElectronico },
+    });
+}
+
+export function restablecerContrasena(token, contrasena) {
+    return solicitar("/auth/restablecer-contrasena", {
+        metodo: "POST",
+        cuerpo: { token, contrasena },
+    });
+}
+
+export function registrarArtesanoAdmin(datosArtesano, token) {
+    return solicitar("/artesanos/admin", { metodo: "POST", cuerpo: datosArtesano, token });
 }

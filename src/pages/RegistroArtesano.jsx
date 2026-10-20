@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { registrarArtesano } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { destinoPorRol } from "../utils/helpers";
 import { Boton, Campo, Alerta } from "../components/ui";
+import ReenviarVerificacion from "../components/ReenviarVerificacion";
 
 const FORMULARIO_VACIO = {
     nombre: "",
@@ -17,12 +18,12 @@ const FORMULARIO_VACIO = {
 
 function RegistroArtesano() {
     const { usuario } = useAuth();
-    const navigate = useNavigate();
 
     const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
     const [verContrasena, setVerContrasena] = useState(false);
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
+    const [registrado, setRegistrado] = useState(null);
 
     if (usuario) {
         return <Navigate to={destinoPorRol(usuario.rol)} replace />;
@@ -39,14 +40,61 @@ function RegistroArtesano() {
         setCargando(true);
 
         try {
-            await registrarArtesano(formulario);
-            navigate("/login", {
-                state: { registrado: true, correo: formulario.correoElectronico },
-            });
+            const creado = await registrarArtesano(formulario);
+            setRegistrado(creado.correoElectronico);
         } catch (err) {
             setError(err.message);
+        } finally {
             setCargando(false);
         }
+    }
+
+    if (registrado) {
+        return (
+            <div className="flex justify-center px-4 py-12">
+                <div className="w-full max-w-md">
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 text-center">
+                        <div
+                            className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-600"
+                            aria-hidden="true"
+                        >
+                            <svg
+                                className="h-7 w-7"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <rect x="3" y="5" width="18" height="14" rx="2" />
+                                <path d="M3 7l9 6 9-6" />
+                            </svg>
+                        </div>
+
+                        <h2 className="text-2xl font-semibold text-gray-900">Revisa tu correo</h2>
+                        <p className="mt-2 text-sm text-gray-600">
+                            Te enviamos un enlace de confirmación a{" "}
+                            <span className="font-semibold text-gray-900">{registrado}</span>. Ábrelo para
+                            activar tu cuenta. El enlace vence en 24 horas.
+                        </p>
+                        <p className="mt-3 text-xs text-gray-500">
+                            ¿No lo ves? Mira en la carpeta de spam o pide otro.
+                        </p>
+
+                        <ReenviarVerificacion correo={registrado} />
+
+                        <Link
+                            to="/login"
+                            state={{ correo: registrado }}
+                            className="mt-5 inline-block text-sm font-medium text-green-700 hover:underline"
+                        >
+                            Ya confirmé mi correo, iniciar sesión
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -68,6 +116,7 @@ function RegistroArtesano() {
                             value={formulario.nombre}
                             onChange={manejarCambio}
                             required
+                            maxLength={100}
                             autoComplete="name"
                             autoFocus
                         />
@@ -79,7 +128,9 @@ function RegistroArtesano() {
                             value={formulario.correoElectronico}
                             onChange={manejarCambio}
                             required
+                            maxLength={150}
                             autoComplete="email"
+                            ayuda="Usa un correo real: te enviaremos un enlace para confirmarlo."
                         />
 
                         <Campo
@@ -89,7 +140,9 @@ function RegistroArtesano() {
                             value={formulario.contrasena}
                             onChange={manejarCambio}
                             required
+                            minLength={8}
                             autoComplete="new-password"
+                            ayuda="Mínimo 8 caracteres."
                         />
 
                         <label className="sm:col-span-2 flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
@@ -108,6 +161,7 @@ function RegistroArtesano() {
                             value={formulario.cc}
                             onChange={manejarCambio}
                             required
+                            maxLength={20}
                             inputMode="numeric"
                         />
 
@@ -117,6 +171,7 @@ function RegistroArtesano() {
                             name="telefono"
                             value={formulario.telefono}
                             onChange={manejarCambio}
+                            maxLength={20}
                             autoComplete="tel"
                         />
 
@@ -127,6 +182,7 @@ function RegistroArtesano() {
                             value={formulario.nombreEmprendimiento}
                             onChange={manejarCambio}
                             required
+                            maxLength={150}
                         />
 
                         <Campo
@@ -137,6 +193,7 @@ function RegistroArtesano() {
                             value={formulario.descripcionCorta}
                             onChange={manejarCambio}
                             rows={3}
+                            maxLength={300}
                             ayuda="Cuéntale al público qué haces. Se muestra en las ferias en las que participes."
                         />
 

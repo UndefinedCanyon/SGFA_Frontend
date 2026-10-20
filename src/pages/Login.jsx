@@ -4,6 +4,7 @@ import { iniciarSesion } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { destinoPorRol } from "../utils/helpers";
 import { Boton, Campo, Alerta } from "../components/ui";
+import ReenviarVerificacion from "../components/ReenviarVerificacion";
 import logo from "../assets/logo-sgfa.png";
 
 function Login() {
@@ -14,6 +15,7 @@ function Login() {
     const [contrasena, setContrasena] = useState("");
     const [verContrasena, setVerContrasena] = useState(false);
     const [error, setError] = useState(null);
+    const [sinConfirmar, setSinConfirmar] = useState(false);
     const [cargando, setCargando] = useState(false);
 
     if (usuario) {
@@ -23,6 +25,7 @@ function Login() {
     async function manejarEnvio(evento) {
         evento.preventDefault();
         setError(null);
+        setSinConfirmar(false);
         setCargando(true);
 
         try {
@@ -30,6 +33,7 @@ function Login() {
             iniciarSesionContexto(resultado);
         } catch (err) {
             setError(err.message);
+            setSinConfirmar(err.codigo === "CORREO_NO_VERIFICADO");
             setCargando(false);
         }
     }
@@ -44,9 +48,14 @@ function Login() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                    {state?.registrado && (
+                    {state?.verificado && (
                         <Alerta tipo="exito" className="mb-4">
-                            Cuenta creada con éxito. Inicia sesión para continuar.
+                            Tu correo fue confirmado. Ya puedes iniciar sesión.
+                        </Alerta>
+                    )}
+                    {state?.restablecida && (
+                        <Alerta tipo="exito" className="mb-4">
+                            Tu contraseña fue actualizada. Inicia sesión con la nueva.
                         </Alerta>
                     )}
 
@@ -71,22 +80,32 @@ function Login() {
                             autoFocus={Boolean(state?.correo)}
                         />
 
-                        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={verContrasena}
-                                onChange={(e) => setVerContrasena(e.target.checked)}
-                                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-                            />
-                            Mostrar contraseña
-                        </label>
+                        <div className="flex items-center justify-between gap-3">
+                            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={verContrasena}
+                                    onChange={(e) => setVerContrasena(e.target.checked)}
+                                    className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                />
+                                Mostrar contraseña
+                            </label>
+                            <Link
+                                to="/olvide-contrasena"
+                                className="text-sm font-medium text-green-700 hover:underline"
+                            >
+                                ¿Olvidaste tu contraseña?
+                            </Link>
+                        </div>
 
-                        <Alerta tipo="error">{error}</Alerta>
+                        <Alerta tipo={sinConfirmar ? "aviso" : "error"}>{error}</Alerta>
 
                         <Boton type="submit" cargando={cargando} className="w-full">
                             {cargando ? "Ingresando..." : "Ingresar"}
                         </Boton>
                     </form>
+
+                    {sinConfirmar && <ReenviarVerificacion correo={correoElectronico} />}
                 </div>
 
                 <p className="mt-6 text-sm text-gray-500 text-center">

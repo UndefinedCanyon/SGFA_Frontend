@@ -159,6 +159,9 @@ function GestionArtesanos({ artesanos, cargando, onCambio }) {
                                                 {artesano.nombreEmprendimiento}
                                             </p>
                                             {!artesano.activo && <Insignia tono="rojo">Inactivo</Insignia>}
+                                            {!artesano.correoVerificado && (
+                                                <Insignia tono="ambar">Correo sin confirmar</Insignia>
+                                            )}
                                         </div>
                                         <p className="truncate text-sm text-gray-600">{artesano.nombre}</p>
                                         <p className="truncate text-xs text-gray-500">

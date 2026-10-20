@@ -3,6 +3,9 @@ import Layout from "../layout/Layout";
 import Inicio from "../pages/Inicio";
 import RegistroArtesano from "../pages/RegistroArtesano";
 import Login from "../pages/Login";
+import VerificarCorreo from "../pages/VerificarCorreo";
+import OlvideContrasena from "../pages/OlvideContrasena";
+import RestablecerContrasena from "../pages/RestablecerContrasena";
 import Ferias from "../pages/Ferias";
 import PanelAdministrador from "../pages/PanelAdministrador";
 import PanelArtesano from "../pages/PanelArtesano";
@@ -17,6 +20,9 @@ function AppRoutes() {
                     <Route path="/" element={<Inicio />} />
                     <Route path="/registro" element={<RegistroArtesano />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/verificar-correo" element={<VerificarCorreo />} />
+                    <Route path="/olvide-contrasena" element={<OlvideContrasena />} />
+                    <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
                     <Route path="/ferias" element={<Ferias />} />
 
                     <Route

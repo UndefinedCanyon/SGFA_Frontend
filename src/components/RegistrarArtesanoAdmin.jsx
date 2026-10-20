@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { registrarArtesano } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { registrarArtesanoAdmin } from "../services/api";
 import { Alerta, Boton, Campo } from "./ui";
 
 const FORMULARIO_VACIO = {
@@ -13,6 +14,8 @@ const FORMULARIO_VACIO = {
 };
 
 function RegistrarArtesanoAdmin({ onCreado, onCerrar }) {
+    const { usuario } = useAuth();
+
     const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState(null);
@@ -31,9 +34,9 @@ function RegistrarArtesanoAdmin({ onCreado, onCerrar }) {
         setGuardando(true);
 
         try {
-            const creado = await registrarArtesano(formulario);
+            const creado = await registrarArtesanoAdmin(formulario, usuario.token);
             setMensaje(
-                `Artesano "${creado.nombreEmprendimiento}" registrado. Entrégale su correo y la contraseña inicial para que pueda iniciar sesión.`
+                `Artesano "${creado.nombreEmprendimiento}" registrado y confirmado. Entrégale su correo y la contraseña inicial; podrá cambiarla con "¿Olvidaste tu contraseña?".`
             );
             setFormulario(FORMULARIO_VACIO);
             if (onCreado) await onCreado();
@@ -76,6 +79,7 @@ function RegistrarArtesanoAdmin({ onCreado, onCerrar }) {
                 onChange={manejarCambio}
                 required
                 maxLength={150}
+                ayuda="La cuenta queda confirmada sin enviar ningún correo."
             />
             <Campo
                 etiqueta="Contraseña inicial"
@@ -83,8 +87,9 @@ function RegistrarArtesanoAdmin({ onCreado, onCerrar }) {
                 value={formulario.contrasena}
                 onChange={manejarCambio}
                 required
+                minLength={8}
                 autoComplete="off"
-                ayuda="Se muestra para que puedas dársela al artesano."
+                ayuda="Mínimo 8 caracteres. Se muestra para que puedas dársela al artesano."
             />
 
             <Campo
