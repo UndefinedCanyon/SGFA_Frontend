@@ -27,7 +27,7 @@ function Boton({
         <button
             type={type}
             disabled={disabled || cargando}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${VARIANTES[variante]} ${TAMANOS[tamano]} ${className}`}
+            className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition duration-150 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${VARIANTES[variante]} ${TAMANOS[tamano]} ${className}`}
             {...props}
         >
             {cargando && <Spinner />}

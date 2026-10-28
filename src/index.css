@@ -17,6 +17,164 @@
     }
 }
 
+/* ---------- Animaciones base ---------- */
+/* El estado final es "transform: none" (nunca translateY(0)): así el elemento no queda con una
+   transformación permanente, que rompería los elementos "fixed" de sus hijos (los avisos). */
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes dialogo-entrada {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes fondo-entrada {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes brillo {
+    from {
+        background-position: 200% 0;
+    }
+    to {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes flotar {
+    from {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+        transform: translate3d(24px, -18px, 0) scale(1.08);
+    }
+}
+
+/* Cambio de página y de pestaña */
+.pagina-entrada {
+    animation: aparecer 300ms ease-out both;
+}
+
+.panel-entrada {
+    animation: aparecer 260ms ease-out both;
+}
+
+/* Tarjetas: aparecen escalonadas y se elevan al pasar el ratón.
+   Se usa "backwards" para que, al terminar, el hover pueda mover la tarjeta. */
+article {
+    animation: aparecer 380ms ease-out backwards;
+    transition:
+        transform 180ms ease,
+        box-shadow 180ms ease;
+}
+
+article:nth-child(2) {
+    animation-delay: 50ms;
+}
+article:nth-child(3) {
+    animation-delay: 100ms;
+}
+article:nth-child(4) {
+    animation-delay: 150ms;
+}
+article:nth-child(5) {
+    animation-delay: 200ms;
+}
+article:nth-child(6) {
+    animation-delay: 250ms;
+}
+article:nth-child(7) {
+    animation-delay: 300ms;
+}
+article:nth-child(8) {
+    animation-delay: 350ms;
+}
+article:nth-child(n + 9) {
+    animation-delay: 400ms;
+}
+
+@media (hover: hover) {
+    article:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.18);
+    }
+}
+
+/* Cuadros de confirmación */
+dialog[open] {
+    animation: dialogo-entrada 200ms ease-out;
+}
+
+dialog[open]::backdrop {
+    animation: fondo-entrada 200ms ease-out;
+}
+
+/* Esqueletos de carga con brillo */
+.esqueleto {
+    background-image: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+    background-size: 200% 100%;
+    animation: brillo 1.4s ease-in-out infinite;
+}
+
+/* Encabezado: sombra al desplazarse (Layout marca <html data-desplazado="si">) */
+header.sticky {
+    transition: box-shadow 200ms ease;
+}
+
+html[data-desplazado="si"] header.sticky {
+    box-shadow: 0 6px 16px -10px rgb(0 0 0 / 0.25);
+}
+
+/* Página de inicio */
+.entrada {
+    animation: aparecer 600ms ease-out both;
+}
+
+.retardo-1 {
+    animation-delay: 90ms;
+}
+
+.retardo-2 {
+    animation-delay: 180ms;
+}
+
+.retardo-3 {
+    animation-delay: 270ms;
+}
+
+.flotar {
+    animation: flotar 10s ease-in-out infinite alternate;
+}
+
+/* Las secciones aparecen al desplazarse. Solo en navegadores que lo soportan: en los demás
+   se ven normales, sin animación. */
+@supports (animation-timeline: view()) {
+    .revelar {
+        animation: aparecer linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 35%;
+    }
+}
+
 /* Notificaciones emergentes */
 @keyframes aviso-entrada {
     from {
@@ -49,9 +207,20 @@
     animation-fill-mode: forwards;
 }
 
+/* Quien pide reducir el movimiento no ve animaciones */
 @media (prefers-reduced-motion: reduce) {
-    .aviso-entrada {
-        animation: none;
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .revelar {
+        animation: none !important;
     }
 
     .aviso-progreso {

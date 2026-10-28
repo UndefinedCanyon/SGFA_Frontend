@@ -7,6 +7,7 @@ export function PanelPestana({ idBase, id, activa, children }) {
             role="tabpanel"
             aria-labelledby={`${idBase}-tab-${id}`}
             hidden={activa !== id}
+            className="panel-entrada"
         >
             {children}
         </div>
@@ -62,7 +63,7 @@ function Pestanas({ idBase, pestanas, activa, onCambiar }) {
                         {pestana.etiqueta}
                         {pestana.contador !== undefined && (
                             <span
-                                className={`rounded-full px-2 py-0.5 text-xs ${
+                                className={`rounded-full px-2 py-0.5 text-xs transition-colors ${
                                     seleccionada ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                                 }`}
                             >

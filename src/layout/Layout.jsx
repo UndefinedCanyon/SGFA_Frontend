@@ -13,6 +13,17 @@ function Layout() {
         window.scrollTo(0, 0);
     }, [pathname]);
 
+    // Marca en <html> si la página está desplazada, para que el encabezado muestre su sombra.
+    useEffect(() => {
+        function alDesplazar() {
+            document.documentElement.dataset.desplazado = window.scrollY > 4 ? "si" : "no";
+        }
+
+        alDesplazar();
+        window.addEventListener("scroll", alDesplazar, { passive: true });
+        return () => window.removeEventListener("scroll", alDesplazar);
+    }, []);
+
     return (
         <div className="min-h-screen flex flex-col">
             <a
@@ -47,7 +58,9 @@ function Layout() {
             )}
 
             <main id="contenido" className="flex-1">
-                <Outlet />
+                <div key={pathname} className="pagina-entrada">
+                    <Outlet />
+                </div>
             </main>
             <Footer />
         </div>

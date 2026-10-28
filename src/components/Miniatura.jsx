@@ -10,13 +10,15 @@ function Miniatura({ imagen, nombre, redonda = false, className = "h-12 w-12 tex
 
     if (imagen && imagenFallida !== imagen) {
         return (
-            <img
-                src={urlImagen(imagen)}
-                alt={nombre ? `Imagen de ${nombre}` : ""}
-                loading="lazy"
-                onError={() => setImagenFallida(imagen)}
-                className={`${base} bg-gray-100 object-cover`}
-            />
+            <span className={`block bg-gray-100 ${base}`}>
+                <img
+                    src={urlImagen(imagen)}
+                    alt={nombre ? `Imagen de ${nombre}` : ""}
+                    loading="lazy"
+                    onError={() => setImagenFallida(imagen)}
+                    className="h-full w-full object-cover transition-transform duration-300 ease-out hover:scale-110"
+                />
+            </span>
         );
     }
 
