@@ -47,7 +47,8 @@ function GestionEdiciones({ ferias, lugares, ediciones, ocupaciones, cargando, o
     const [mensaje, setMensaje] = useState(null);
 
     const feriasActivas = ferias.filter((f) => f.activo);
-    const puedeCrear = feriasActivas.length > 0 && lugares.length > 0;
+    const lugaresActivos = lugares.filter((lugar) => lugar.activo);
+    const puedeCrear = feriasActivas.length > 0 && lugaresActivos.length > 0;
 
     const lista = useMemo(() => {
         const termino = normalizarTexto(busqueda.trim());
@@ -218,7 +219,7 @@ function GestionEdiciones({ ferias, lugares, ediciones, ocupaciones, cargando, o
                                 required
                             >
                                 <option value="">Selecciona un lugar</option>
-                                {lugares.map((lugar) => (
+                                {lugaresActivos.map((lugar) => (
                                     <option key={lugar.id} value={lugar.id}>{lugar.nombre}</option>
                                 ))}
                             </Campo>

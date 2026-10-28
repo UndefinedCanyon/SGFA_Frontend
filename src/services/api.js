@@ -264,3 +264,7 @@ export function restablecerContrasena(token, contrasena) {
 export function registrarArtesanoAdmin(datosArtesano, token) {
     return solicitar("/artesanos/admin", { metodo: "POST", cuerpo: datosArtesano, token });
 }
+
+export function cambiarEstadoLugar(idLugar, activo, token) {
+    return solicitar(`/lugares/${idLugar}/estado`, { metodo: "PUT", cuerpo: { activo }, token });
+}

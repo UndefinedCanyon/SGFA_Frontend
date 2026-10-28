@@ -191,6 +191,7 @@ function PanelAdministrador() {
 
                 <PanelPestana idBase="panel-admin" id="lugares" activa={pestana}>
                     <GestionLugares
+                        ediciones={ediciones}
                         lugares={lugares}
                         cargando={cargando}
                         onCambio={recargar}
