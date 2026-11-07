@@ -74,7 +74,7 @@ function Ferias() {
     }
 
     useEffect(() => {
-        cargar();
+        void cargar();
     }, []);
 
     useEffect(() => {

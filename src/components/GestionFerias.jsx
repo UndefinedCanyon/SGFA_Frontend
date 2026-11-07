@@ -177,7 +177,7 @@ function GestionFerias({ ferias, ediciones, cargando, onCambio }) {
                                         <form
                                             onSubmit={(e) => {
                                                 e.preventDefault();
-                                                guardarNombre(feria);
+                                                void guardarNombre(feria);
                                             }}
                                             className="flex flex-1 flex-wrap items-center gap-2"
                                         >
@@ -187,7 +187,6 @@ function GestionFerias({ ferias, ediciones, cargando, onCambio }) {
                                                 onChange={(e) => setNombreEditado(e.target.value)}
                                                 required
                                                 maxLength={150}
-                                                autoFocus
                                                 aria-label="Nuevo nombre de la feria"
                                                 className="min-w-[12rem] flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                                             />

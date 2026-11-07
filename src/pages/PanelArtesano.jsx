@@ -102,9 +102,9 @@ function PanelArtesano() {
     }
 
     useEffect(() => {
-        cargarProductos();
-        cargarSolicitudes();
-        cargarReferencias();
+        void cargarProductos();
+        void cargarSolicitudes();
+        void cargarReferencias();
     }, []);
 
     function manejarCambio(evento) {

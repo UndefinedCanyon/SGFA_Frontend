@@ -30,7 +30,7 @@ function RestablecerContrasena() {
         setCargando(true);
         try {
             await restablecerContrasena(token, contrasena);
-            navigate("/login", { state: { restablecida: true }, replace: true });
+            void navigate("/login", { state: { restablecida: true }, replace: true });
         } catch (err) {
             setError(err.message);
             setCargando(false);

@@ -75,7 +75,7 @@ function PanelAdministrador() {
     }
 
     useEffect(() => {
-        recargar();
+        void recargar();
     }, []);
 
     const pendientes = solicitudes.filter((s) => s.estado === "PENDIENTE").length;

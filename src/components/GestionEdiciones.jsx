@@ -379,7 +379,7 @@ function GestionEdiciones({ ferias, lugares, ediciones, ocupaciones, cargando, o
                                         <form
                                             onSubmit={(e) => {
                                                 e.preventDefault();
-                                                guardarCupo(edicion.id);
+                                                void guardarCupo(edicion.id);
                                             }}
                                             className="flex flex-wrap items-center gap-2 border-t border-gray-100 px-5 py-3"
                                         >
@@ -391,7 +391,6 @@ function GestionEdiciones({ ferias, lugares, ediciones, ocupaciones, cargando, o
                                                 onChange={(e) => setCupoEditado(e.target.value)}
                                                 placeholder="Vacío = sin límite"
                                                 aria-label="Cupo máximo de artesanos"
-                                                autoFocus
                                                 className="w-48 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                                             />
                                             <Boton type="submit" tamano="sm" cargando={guardandoCupo}>

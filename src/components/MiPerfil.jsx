@@ -41,7 +41,7 @@ function MiPerfil() {
             }
         }
 
-        cargarPerfil();
+        void cargarPerfil();
     }, []);
 
     function manejarCambio(evento) {
