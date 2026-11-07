@@ -77,7 +77,7 @@ function Inicio() {
             }
         }
 
-        cargar();
+        void cargar();
     }, []);
 
     return (
