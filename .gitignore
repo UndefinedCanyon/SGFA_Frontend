@@ -27,3 +27,7 @@ dist-ssr
 # SonarQube y cobertura
 .scannerwork/
 coverage/
+
+# Playwright
+test-results/
+playwright-report/
