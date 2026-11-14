@@ -1,13 +1,26 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Alerta, Boton } from "../components/ui";
+import { Alerta, Bienvenida, Boton } from "../components/ui";
 import Header from "./Header";
 import Footer from "./Footer";
 
 function Layout() {
     const { pathname } = useLocation();
-    const { sesionExpirada, descartarAvisoSesion } = useAuth();
+    const { usuario, sesionExpirada, descartarAvisoSesion } = useAuth();
+    const [bienvenida, setBienvenida] = useState(null);
+    const usuarioPrevio = useRef(usuario);
+
+    // Da la bienvenida solo cuando la persona inicia sesión en esta visita; si recarga la
+    // página con la sesión ya abierta no se muestra de nuevo.
+    useEffect(() => {
+        if (!usuarioPrevio.current && usuario) {
+            setBienvenida({ nombre: usuario.nombre, rol: usuario.rol });
+        }
+        usuarioPrevio.current = usuario;
+    }, [usuario]);
+
+    const cerrarBienvenida = useCallback(() => setBienvenida(null), []);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -63,6 +76,10 @@ function Layout() {
                 </div>
             </main>
             <Footer />
+
+            {bienvenida && (
+                <Bienvenida nombre={bienvenida.nombre} rol={bienvenida.rol} onCerrar={cerrarBienvenida} />
+            )}
         </div>
     );
 }

@@ -141,4 +141,38 @@ describe("Layout: sombra del encabezado al desplazar", () => {
 
         expect(document.documentElement.dataset.desplazado).toBe("no");
     });
+
+    describe("bienvenida al iniciar sesión", () => {
+        function sesion(usuario) {
+            return { usuario, cerrarSesion: vi.fn(), sesionExpirada: false, descartarAvisoSesion };
+        }
+
+        it("no aparece si la sesión ya estaba abierta al cargar la página", () => {
+            useAuth.mockReturnValue(sesion({ nombre: "Carlos", rol: "ARTESANO" }));
+            montar();
+
+            expect(screen.queryByText(/Bienvenido a SGFA/)).not.toBeInTheDocument();
+        });
+
+        it("aparece cuando la persona inicia sesión y se puede cerrar", () => {
+            const { rerender } = montar();
+            expect(screen.queryByText(/Bienvenido a SGFA/)).not.toBeInTheDocument();
+
+            useAuth.mockReturnValue(sesion({ nombre: "Carlos", rol: "ARTESANO" }));
+            rerender(
+                <MemoryRouter initialEntries={["/ferias"]}>
+                    <Routes>
+                        <Route element={<Layout />}>
+                            <Route path="/ferias" element={<p>contenido</p>} />
+                        </Route>
+                    </Routes>
+                </MemoryRouter>
+            );
+
+            expect(screen.getByText("¡Bienvenido a SGFA, Carlos!")).toBeInTheDocument();
+
+            fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+            expect(screen.queryByText(/Bienvenido a SGFA/)).not.toBeInTheDocument();
+        });
+    });
 });

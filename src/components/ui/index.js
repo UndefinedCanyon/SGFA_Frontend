@@ -12,3 +12,4 @@ export { default as Onda } from "./Onda";
 export { default as Portada } from "./Portada";
 export { default as EncabezadoPagina } from "./EncabezadoPagina";
 export { default as FondoAcceso } from "./FondoAcceso";
+export { default as Bienvenida } from "./Bienvenida";

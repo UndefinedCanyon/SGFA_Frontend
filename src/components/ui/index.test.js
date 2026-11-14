@@ -18,6 +18,7 @@ describe("índice de componentes de UI", () => {
         "Portada",
         "EncabezadoPagina",
         "FondoAcceso",
+        "Bienvenida",
     ])("exporta %s", (nombre) => {
         expect(ui[nombre]).toBeDefined();
     });
