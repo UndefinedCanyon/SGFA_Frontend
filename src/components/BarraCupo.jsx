@@ -30,7 +30,7 @@ function BarraCupo({ ocupacion }) {
         <div>
             <div className="flex items-baseline justify-between mb-1">
                 <p className="text-xs text-gray-500">Artesanos aprobados</p>
-                <p className={`text-xs font-semibold ${lleno ? "text-red-600" : "text-green-700"}`}>
+                <p className={`text-xs font-semibold ${lleno ? "text-red-600" : "text-bosque-700"}`}>
                     {porcentaje}%
                 </p>
             </div>
@@ -46,7 +46,7 @@ function BarraCupo({ ocupacion }) {
                 className="h-2 w-full bg-gray-200 rounded-full overflow-hidden"
             >
                 <div
-                    className={`h-full rounded-full ${lleno ? "bg-red-500" : "bg-green-600"}`}
+                    className={`h-full rounded-full ${lleno ? "bg-red-500" : "bg-bosque-600"}`}
                     style={{
                         width: `${llena ? porcentaje : 0}%`,
                         transition: "width 900ms cubic-bezier(0.22, 1, 0.36, 1)",

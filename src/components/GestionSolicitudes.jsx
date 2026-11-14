@@ -161,7 +161,7 @@ function GestionSolicitudes({
                             onClick={() => setFiltro(f.valor)}
                             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                                 filtro === f.valor
-                                    ? "border-green-600 bg-green-600 text-white"
+                                    ? "border-brand-600 bg-brand-600 text-white"
                                     : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                             }`}
                         >
@@ -176,7 +176,7 @@ function GestionSolicitudes({
                             type="checkbox"
                             checked={ordenarPorIA}
                             onChange={(e) => setOrdenarPorIA(e.target.checked)}
-                            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                            className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                         />
                         Ordenar por la prioridad que sugiere el asistente
                     </label>

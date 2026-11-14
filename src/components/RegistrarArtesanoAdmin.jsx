@@ -50,7 +50,7 @@ function RegistrarArtesanoAdmin({ onCreado, onCerrar }) {
     return (
         <form
             onSubmit={manejarEnvio}
-            className="mb-5 grid gap-4 rounded-xl border border-green-100 bg-green-50/50 p-4 sm:grid-cols-2"
+            className="mb-5 grid gap-4 rounded-xl border border-brand-100 bg-brand-50/50 p-4 sm:grid-cols-2"
         >
             <Campo
                 etiqueta="Nombre completo"

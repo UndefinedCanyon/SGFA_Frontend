@@ -10,7 +10,7 @@ import { formatearFechaCorta, formatearPrecio } from "../utils/helpers";
 import { prepararImagen } from "../utils/imagenes";
 import {
     Alerta, Boton, Campo, ConfirmarDialogo, EstadoVacio, Esqueleto,
-    Insignia, Pestanas, PanelPestana, Tarjeta,
+    EncabezadoPagina, Insignia, Pestanas, PanelPestana, Tarjeta,
 } from "../components/ui";
 import MiPerfil from "../components/MiPerfil";
 import SelectorImagen from "../components/SelectorImagen";
@@ -27,7 +27,7 @@ const ORDEN_SOLICITUD = { PENDIENTE: 0, APROBADA: 1, RECHAZADA: 2 };
 
 function Estadistica({ etiqueta, valor, cargando }) {
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-t-4 border-gray-200 border-t-brand-500 bg-white p-4 shadow-sm">
             <p className="text-xs text-gray-500">{etiqueta}</p>
             <div className="mt-1 text-2xl font-semibold text-gray-900">
                 {cargando ? <Esqueleto className="h-8 w-10" /> : valor}
@@ -245,14 +245,14 @@ function PanelArtesano() {
     ];
 
     return (
+        <>
+        <EncabezadoPagina
+            foto="panel"
+            ancho="max-w-5xl"
+            titulo="Mi panel"
+            descripcion={`Hola, ${usuario.nombre}. Administra tu catálogo y sigue tus solicitudes de participación.`}
+        />
         <div className="max-w-5xl mx-auto px-6 py-10">
-            <div className="mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">Mi panel</h2>
-                <p className="text-gray-500 mt-1">
-                    Hola, {usuario.nombre}. Administra tu catálogo y sigue tus solicitudes de participación.
-                </p>
-            </div>
-
             <div className="grid grid-cols-3 gap-3 mb-8">
                 <Estadistica etiqueta="Productos" valor={productos.length} cargando={cargandoProductos} />
                 <Estadistica etiqueta="Pendientes" valor={pendientes} cargando={cargandoSolicitudes} />
@@ -363,7 +363,7 @@ function PanelArtesano() {
                                     key={producto.id}
                                     className={`flex gap-4 rounded-2xl border bg-white p-4 shadow-sm transition-shadow ${
                                         editandoId === producto.id
-                                            ? "border-green-500 ring-2 ring-green-100"
+                                            ? "border-brand-500 ring-2 ring-brand-100"
                                             : "border-gray-200"
                                     }`}
                                 >
@@ -380,7 +380,7 @@ function PanelArtesano() {
                                             <h4 className="font-semibold text-gray-900 truncate">{producto.nombre}</h4>
                                             {producto.cantidad === 0 && <Insignia tono="rojo">Agotado</Insignia>}
                                         </div>
-                                        <p className="text-lg font-semibold text-green-700">
+                                        <p className="text-lg font-semibold text-brand-700">
                                             ${formatearPrecio(producto.precio)}
                                         </p>
                                         <p className="text-sm text-gray-500">
@@ -432,7 +432,7 @@ function PanelArtesano() {
                                 accion={
                                     <Link
                                         to="/ferias"
-                                        className="inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                                        className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-700"
                                     >
                                         Explorar ferias
                                     </Link>
@@ -488,6 +488,7 @@ function PanelArtesano() {
                 onCancelar={() => setProductoAEliminar(null)}
             />
         </div>
+        </>
     );
 }
 

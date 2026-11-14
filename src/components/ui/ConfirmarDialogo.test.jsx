@@ -139,7 +139,7 @@ describe("ConfirmarDialogo", () => {
     it("usa el estilo primario cuando no es una acción peligrosa", () => {
         montar({ peligro: false });
 
-        expect(boton("Confirmar")).toHaveClass("bg-green-600");
+        expect(boton("Confirmar")).toHaveClass("bg-brand-600");
     });
 
     it("deshabilita el botón de confirmar mientras está cargando", () => {

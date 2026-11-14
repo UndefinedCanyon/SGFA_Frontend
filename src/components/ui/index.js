@@ -8,3 +8,7 @@ export { default as Esqueleto } from "./Esqueleto";
 export { default as ConfirmarDialogo } from "./ConfirmarDialogo";
 export { default as Spinner } from "./Spinner";
 export { default as Pestanas, PanelPestana } from "./Pestanas";
+export { default as Onda } from "./Onda";
+export { default as Portada } from "./Portada";
+export { default as EncabezadoPagina } from "./EncabezadoPagina";
+export { default as FondoAcceso } from "./FondoAcceso";

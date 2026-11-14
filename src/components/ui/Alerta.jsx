@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useAvisos } from "../../context/AvisosContext";
 
 const TIPOS = {
-    exito: "bg-green-50 text-green-800 border-green-200",
+    exito: "bg-bosque-50 text-bosque-800 border-bosque-200",
     error: "bg-red-50 text-red-800 border-red-200",
     info: "bg-blue-50 text-blue-800 border-blue-200",
     aviso: "bg-amber-50 text-amber-800 border-amber-200",

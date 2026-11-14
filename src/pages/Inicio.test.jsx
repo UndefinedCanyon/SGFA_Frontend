@@ -8,10 +8,12 @@ vi.mock("../services/api", () => ({
     consultarLugares: vi.fn(),
 }));
 vi.mock("../context/AuthContext", () => ({ useAuth: vi.fn() }));
+vi.mock("../utils/fotos", () => ({ fotoDe: vi.fn() }));
 
 import Inicio from "./Inicio";
 import { consultarEdicionesFeria, consultarFerias, consultarLugares } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { fotoDe } from "../utils/fotos";
 
 const ferias = [{ id: 1, nombreFeria: "Feria Andina" }, { id: 2, nombreFeria: "Feria Navideña" }];
 const lugares = [{ id: 1, nombre: "Plaza Mayor" }];
@@ -25,6 +27,7 @@ beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 10, 8, 12, 0, 0));
     useAuth.mockReturnValue({ usuario: null });
+    fotoDe.mockReturnValue(null);
     consultarFerias.mockResolvedValue(ferias);
     consultarLugares.mockResolvedValue(lugares);
     consultarEdicionesFeria.mockResolvedValue([]);
@@ -38,6 +41,23 @@ function montar() {
         </MemoryRouter>
     );
 }
+
+describe("Inicio: fotos opcionales", () => {
+    it("usa la foto de convocatoria en la franja final cuando existe", () => {
+        fotoDe.mockImplementation((nombre) => (nombre === "convocatoria" ? "/assets/convocatoria-real.webp" : null));
+        const { container } = montar();
+
+        expect(fotoDe).toHaveBeenCalledWith("convocatoria");
+        expect(container.innerHTML).toContain("convocatoria-real.webp");
+    });
+
+    it("sin foto, la franja final usa solo el degradado y el patrón", () => {
+        const { container } = montar();
+
+        expect(container.innerHTML).not.toContain("convocatoria-real.webp");
+        expect(screen.getByRole("heading", { name: "¿Tienes un emprendimiento artesanal?" })).toBeInTheDocument();
+    });
+});
 
 describe("Inicio: portada", () => {
     it("muestra el título, las instrucciones y los perfiles", () => {

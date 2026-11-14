@@ -54,7 +54,7 @@ function SelectorImagen({
                             redonda ? "rounded-full" : "rounded-xl"
                         }`}
                     >
-                        <Spinner className="h-5 w-5 text-green-700" />
+                        <Spinner className="h-5 w-5 text-brand-700" />
                     </div>
                 )}
             </div>
@@ -74,7 +74,7 @@ function SelectorImagen({
                 onClick={() => entrada.current?.click()}
                 disabled={ocupado}
                 aria-label={`${imagen ? "Cambiar" : "Subir"} imagen de ${nombre}`}
-                className="text-xs font-medium text-green-700 hover:underline disabled:opacity-50"
+                className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
             >
                 {imagen ? "Cambiar" : "Subir foto"}
             </button>

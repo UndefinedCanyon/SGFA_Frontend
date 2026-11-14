@@ -4,9 +4,9 @@ const ESTILOS = {
     exito: {
         titulo: "Listo",
         rol: "status",
-        borde: "border-l-green-500",
-        icono: "bg-green-100 text-green-700",
-        barra: "bg-green-500",
+        borde: "border-l-bosque-500",
+        icono: "bg-bosque-100 text-bosque-700",
+        barra: "bg-bosque-500",
     },
     error: {
         titulo: "Algo salió mal",

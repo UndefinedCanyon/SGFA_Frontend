@@ -11,6 +11,13 @@ const ETIQUETAS = {
     FINALIZADA: { texto: "Finalizada", tono: "gris" },
 };
 
+// Franja de color en el borde superior de la tarjeta según el estado de la edición.
+const FRANJAS = {
+    EN_CURSO: "border-t-bosque-500",
+    PROXIMA: "border-t-ocre-400",
+    FINALIZADA: "border-t-gray-300",
+};
+
 const SOLICITUDES = {
     PENDIENTE: { texto: "Solicitud pendiente", tono: "ambar" },
     APROBADA: { texto: "Participas en esta edición", tono: "verde" },
@@ -20,7 +27,7 @@ const SOLICITUDES = {
 function IconoCalendario() {
     return (
         <svg
-            className="h-5 w-5 text-green-600 shrink-0 mt-0.5"
+            className="h-5 w-5 text-brand-600 shrink-0 mt-0.5"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -38,7 +45,7 @@ function IconoCalendario() {
 function IconoUbicacion() {
     return (
         <svg
-            className="h-5 w-5 text-green-600 shrink-0 mt-0.5"
+            className="h-5 w-5 text-brand-600 shrink-0 mt-0.5"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -70,7 +77,7 @@ function TarjetaEdicion({
 }) {
     if (!edicion) {
         return (
-            <article className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <article className="bg-white rounded-2xl border border-gray-200 border-t-4 border-t-gray-300 shadow-sm p-6">
                 <div className="flex items-start justify-between gap-3">
                     <h3 className="text-lg font-semibold text-gray-900">{feria.nombreFeria}</h3>
                     <Insignia tono="gris">Sin ediciones</Insignia>
@@ -89,7 +96,9 @@ function TarjetaEdicion({
     const puedeSolicitar = rolUsuario === "ARTESANO" && !estadoSolicitud && !finalizada;
 
     return (
-        <article className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <article
+            className={`bg-white rounded-2xl border border-gray-200 border-t-4 shadow-sm overflow-hidden ${FRANJAS[estado] ?? FRANJAS.FINALIZADA}`}
+        >
             <div className="grid md:grid-cols-[1fr_16rem]">
                 <div className="p-6">
                     <div className="flex items-start justify-between gap-3">
@@ -140,7 +149,7 @@ function TarjetaEdicion({
                     ) : !rolUsuario ? (
                         <p className="text-xs text-gray-500">
                             ¿Eres artesano?{" "}
-                            <Link to="/login" className="text-green-700 font-medium hover:underline">
+                            <Link to="/login" className="text-brand-700 font-medium hover:underline">
                                 Inicia sesión
                             </Link>{" "}
                             para solicitar participación.

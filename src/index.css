@@ -1,14 +1,91 @@
 @import "tailwindcss";
 
+/* ---------- Sistema de diseño: "cálido artesanal" ----------
+   brand  = terracota (acción principal)      ocre   = acento dorado
+   bosque = verde profundo (éxito/naturaleza) gray   = neutros cálidos (crema y piedra)
+   Se redefine "gray" para que todo el sitio use neutros cálidos sin tocar cada clase. */
+@theme {
+    --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+
+    --color-brand-50: #fdf3ee;
+    --color-brand-100: #fbe5d8;
+    --color-brand-200: #f6c9af;
+    --color-brand-300: #efa67d;
+    --color-brand-400: #e57f4d;
+    --color-brand-500: #d9602b;
+    --color-brand-600: #c04a1e;
+    --color-brand-700: #9e3b19;
+    --color-brand-800: #7f3118;
+    --color-brand-900: #682c17;
+
+    --color-ocre-50: #fdf8e8;
+    --color-ocre-100: #faefc4;
+    --color-ocre-200: #f5df8c;
+    --color-ocre-300: #eec74f;
+    --color-ocre-400: #e5ad24;
+    --color-ocre-500: #c98f12;
+    --color-ocre-600: #a56e0d;
+    --color-ocre-700: #7f5010;
+
+    --color-bosque-50: #eef5f0;
+    --color-bosque-100: #d8e9dd;
+    --color-bosque-200: #b3d3bd;
+    --color-bosque-500: #3f8460;
+    --color-bosque-600: #2f6b4a;
+    --color-bosque-700: #25573c;
+    --color-bosque-800: #1f4632;
+    --color-bosque-900: #183a2a;
+
+    --color-gray-50: #faf6f0;
+    --color-gray-100: #f3ede3;
+    --color-gray-200: #e7dfd1;
+    --color-gray-300: #d6ccba;
+    --color-gray-400: #9a907e;
+    --color-gray-500: #766d5f;
+    --color-gray-600: #5e5649;
+    --color-gray-700: #473f35;
+    --color-gray-800: #322c25;
+    --color-gray-900: #221e19;
+}
+
 @layer base {
     body {
         @apply bg-gray-50 text-gray-900 antialiased;
+        font-family: var(--font-sans);
+    }
+
+    h1,
+    h2,
+    h3 {
+        font-family: var(--font-display);
+        letter-spacing: -0.01em;
     }
 
     :focus-visible {
-        outline: 2px solid #16a34a;
+        outline: 2px solid var(--color-brand-600);
         outline-offset: 2px;
     }
+}
+
+/* ---------- Fondos decorativos ---------- */
+/* Papel con un grano muy suave: el fondo general de todas las páginas. */
+.fondo-papel {
+    background-color: var(--color-gray-50);
+    background-image:
+        radial-gradient(circle at 15% 10%, rgb(229 173 36 / 0.07), transparent 40%),
+        radial-gradient(circle at 90% 85%, rgb(217 96 43 / 0.06), transparent 38%);
+}
+
+/* Patrón de tejido (el SVG se pone con style backgroundImage desde el componente). */
+.patron {
+    background-repeat: repeat;
+    background-size: 64px 64px;
+}
+
+/* Capa que oscurece la foto o ilustración para que el texto siempre se lea. */
+.velo-calido {
+    background: linear-gradient(180deg, rgb(34 30 25 / 0.15) 0%, rgb(34 30 25 / 0.62) 100%);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -115,7 +192,7 @@ article:nth-child(n + 9) {
 @media (hover: hover) {
     article:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.18);
+        box-shadow: 0 14px 28px -14px rgb(104 44 23 / 0.28);
     }
 }
 
@@ -130,7 +207,7 @@ dialog[open]::backdrop {
 
 /* Esqueletos de carga con brillo */
 .esqueleto {
-    background-image: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+    background-image: linear-gradient(90deg, #e7dfd1 25%, #f3ede3 50%, #e7dfd1 75%);
     background-size: 200% 100%;
     animation: brillo 1.4s ease-in-out infinite;
 }
@@ -141,7 +218,7 @@ header.sticky {
 }
 
 html[data-desplazado="si"] header.sticky {
-    box-shadow: 0 6px 16px -10px rgb(0 0 0 / 0.25);
+    box-shadow: 0 6px 16px -10px rgb(104 44 23 / 0.3);
 }
 
 /* Página de inicio */

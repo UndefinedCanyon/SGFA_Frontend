@@ -24,7 +24,7 @@ function Miniatura({ imagen, nombre, redonda = false, className = "h-12 w-12 tex
 
     return (
         <div
-            className={`${base} flex items-center justify-center bg-green-100 font-semibold text-green-700`}
+            className={`${base} flex items-center justify-center bg-brand-100 font-semibold text-brand-700`}
             aria-hidden="true"
         >
             {(nombre ?? "?").charAt(0).toUpperCase()}

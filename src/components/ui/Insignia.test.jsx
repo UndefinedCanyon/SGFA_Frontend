@@ -15,7 +15,7 @@ describe('Insignia', () => {
 
   it('cambia de color según el tono', () => {
     const { rerender } = render(<Insignia tono="verde">Estado</Insignia>)
-    expect(screen.getByText('Estado').className).toContain('bg-green-100')
+    expect(screen.getByText('Estado').className).toContain('bg-bosque-100')
 
     rerender(<Insignia tono="rojo">Estado</Insignia>)
     expect(screen.getByText('Estado').className).toContain('bg-red-100')

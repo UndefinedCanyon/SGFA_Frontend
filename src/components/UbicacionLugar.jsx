@@ -14,7 +14,7 @@ function UbicacionLugar({ lugar }) {
                     type="button"
                     onClick={() => setAbierto((visible) => !visible)}
                     aria-expanded={abierto}
-                    className="text-xs font-medium text-green-700 hover:underline"
+                    className="text-xs font-medium text-brand-700 hover:underline"
                 >
                     {abierto ? "Ocultar mapa" : "Ver mapa"}
                 </button>
@@ -22,7 +22,7 @@ function UbicacionLugar({ lugar }) {
                     href={enlaceComoLlegar(lugar)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs font-medium text-green-700 hover:underline"
+                    className="text-xs font-medium text-brand-700 hover:underline"
                 >
                     Cómo llegar ↗
                 </a>

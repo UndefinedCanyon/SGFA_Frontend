@@ -5,7 +5,7 @@ import {
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { estadoEdicion, normalizarTexto } from "../utils/helpers";
-import { Alerta, Boton, Campo, EstadoVacio, Esqueleto } from "../components/ui";
+import { Alerta, Boton, Campo, EstadoVacio, Esqueleto, EncabezadoPagina } from "../components/ui";
 import TarjetaEdicion from "../components/TarjetaEdicion";
 
 const OPCIONES_ESTADO = [
@@ -193,14 +193,13 @@ function Ferias() {
     }
 
     return (
+        <>
+        <EncabezadoPagina
+            foto="ferias"
+            titulo="Ferias artesanales"
+            descripcion="Consulta las ediciones programadas, su cupo y los artesanos que participan."
+        />
         <div className="max-w-6xl mx-auto px-6 py-10">
-            <div className="mb-8">
-                <h2 className="text-3xl font-semibold text-gray-900">Ferias artesanales</h2>
-                <p className="text-gray-500 mt-1">
-                    Consulta las ediciones programadas, su cupo y los artesanos que participan.
-                </p>
-            </div>
-
             <Alerta tipo="error" className="mb-6">{error}</Alerta>
 
             {errorCarga ? (
@@ -304,6 +303,7 @@ function Ferias() {
                 </>
             )}
         </div>
+        </>
     );
 }
 

@@ -4,7 +4,7 @@ import {
     consultarTodasLasSolicitudes, consultarTodosLosArtesanos, consultarTodasLasFerias,
     consultarLugares, consultarTodasLasEdiciones, consultarOcupacion,
 } from "../services/api";
-import { Alerta, Boton, Esqueleto, Pestanas, PanelPestana } from "../components/ui";
+import { Alerta, Boton, Esqueleto, Pestanas, PanelPestana, EncabezadoPagina } from "../components/ui";
 import GestionSolicitudes from "../components/GestionSolicitudes";
 import GestionFerias from "../components/GestionFerias";
 import GestionEdiciones from "../components/GestionEdiciones";
@@ -14,8 +14,8 @@ import GestionLugares from "../components/GestionLugares";
 function Estadistica({ etiqueta, valor, cargando, destacada = false }) {
     return (
         <div
-            className={`rounded-2xl border p-4 shadow-sm ${
-                destacada ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-white"
+            className={`rounded-2xl border border-t-4 p-4 shadow-sm ${
+                destacada ? "border-amber-200 border-t-ocre-400 bg-ocre-50" : "border-gray-200 border-t-brand-500 bg-white"
             }`}
         >
             <p className="text-xs text-gray-500">{etiqueta}</p>
@@ -100,14 +100,14 @@ function PanelAdministrador() {
     ];
 
     return (
+        <>
+        <EncabezadoPagina
+            foto="panel"
+            ancho="max-w-5xl"
+            titulo="Panel de administrador"
+            descripcion={`Hola, ${usuario.nombre}. Gestiona las ferias, las solicitudes y los artesanos.`}
+        />
         <div className="max-w-5xl mx-auto px-6 py-10">
-            <div className="mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">Panel de administrador</h2>
-                <p className="text-gray-500 mt-1">
-                    Hola, {usuario.nombre}. Gestiona las ferias, las solicitudes y los artesanos.
-                </p>
-            </div>
-
             {errorCarga && (
                 <Alerta tipo="error" className="mb-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -199,6 +199,7 @@ function PanelAdministrador() {
                 </PanelPestana>
             </div>
         </div>
+        </>
     );
 }
 

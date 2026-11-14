@@ -14,6 +14,10 @@ describe("índice de componentes de UI", () => {
         "Spinner",
         "Pestanas",
         "PanelPestana",
+        "Onda",
+        "Portada",
+        "EncabezadoPagina",
+        "FondoAcceso",
     ])("exporta %s", (nombre) => {
         expect(ui[nombre]).toBeDefined();
     });

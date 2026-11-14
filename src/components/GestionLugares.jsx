@@ -164,7 +164,7 @@ function GestionLugares({ lugares, ediciones = [], cargando, onCambio }) {
                 titulo="Lugares"
                 descripcion="Sitios donde se realizan las ediciones. Si les marcas la ubicación, el público verá el mapa."
             >
-                <div ref={formularioRef} className="mb-6 rounded-xl border border-green-100 bg-green-50/50 p-4">
+                <div ref={formularioRef} className="mb-6 rounded-xl border border-brand-100 bg-brand-50/50 p-4">
                     <h4 className="mb-3 text-sm font-semibold text-gray-800">
                         {editandoId ? "Editar lugar" : "Agregar lugar"}
                     </h4>
@@ -262,7 +262,7 @@ function GestionLugares({ lugares, ediciones = [], cargando, onCambio }) {
                                 key={lugar.id}
                                 className={`flex flex-col justify-between gap-3 rounded-xl border px-4 py-3 ${
                                     editandoId === lugar.id
-                                        ? "border-green-500 bg-white ring-2 ring-green-100"
+                                        ? "border-brand-500 bg-white ring-2 ring-brand-100"
                                         : lugar.activo
                                           ? "border-gray-100 bg-white"
                                           : "border-red-100 bg-red-50/40"

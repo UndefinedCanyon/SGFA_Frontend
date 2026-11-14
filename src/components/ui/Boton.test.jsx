@@ -53,7 +53,7 @@ describe('Boton', () => {
 
   it('aplica el color de cada variante', () => {
     const { rerender } = render(<Boton>Ok</Boton>)
-    expect(screen.getByRole('button').className).toContain('bg-green-600')
+    expect(screen.getByRole('button').className).toContain('bg-brand-600')
 
     rerender(<Boton variante="peligro">Ok</Boton>)
     expect(screen.getByRole('button').className).toContain('bg-red-600')

@@ -43,7 +43,7 @@ function Layout() {
                                 {pathname !== "/login" && (
                                     <Link
                                         to="/login"
-                                        className="inline-flex items-center justify-center rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                                        className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brand-700"
                                     >
                                         Iniciar sesión
                                     </Link>

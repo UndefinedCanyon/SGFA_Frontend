@@ -132,7 +132,7 @@ function GestionFerias({ ferias, ediciones, cargando, onCambio }) {
                 {mostrarForm && (
                     <form
                         onSubmit={manejarCrear}
-                        className="mb-5 flex flex-wrap items-end gap-3 rounded-xl border border-green-100 bg-green-50/50 p-4"
+                        className="mb-5 flex flex-wrap items-end gap-3 rounded-xl border border-brand-100 bg-brand-50/50 p-4"
                     >
                         <Campo
                             className="min-w-[14rem] flex-1"
@@ -188,7 +188,7 @@ function GestionFerias({ ferias, ediciones, cargando, onCambio }) {
                                                 required
                                                 maxLength={150}
                                                 aria-label="Nuevo nombre de la feria"
-                                                className="min-w-[12rem] flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                className="min-w-[12rem] flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                             />
                                             <Boton type="submit" tamano="sm" cargando={procesandoId === feria.id}>
                                                 Guardar

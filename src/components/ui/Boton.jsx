@@ -1,11 +1,11 @@
 import Spinner from "./Spinner";
 
 const VARIANTES = {
-    primario: "bg-green-600 text-white hover:bg-green-700 focus-visible:ring-green-600",
+    primario: "bg-brand-600 text-white hover:bg-brand-700 focus-visible:ring-brand-600",
     secundario: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus-visible:ring-gray-400",
     peligro: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600",
     peligroSuave: "text-red-700 hover:bg-red-50 focus-visible:ring-red-600",
-    fantasma: "text-green-700 hover:bg-green-50 focus-visible:ring-green-600",
+    fantasma: "text-brand-700 hover:bg-brand-50 focus-visible:ring-brand-600",
 };
 
 const TAMANOS = {

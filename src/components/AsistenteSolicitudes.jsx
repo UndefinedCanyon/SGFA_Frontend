@@ -65,21 +65,21 @@ function AsistenteSolicitudes({ solicitudes, ediciones, ferias, lugares, onAnali
         return (
             <section
                 aria-label="Asistente de IA"
-                className="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4 text-sm text-blue-900"
+                className="mb-6 rounded-xl border border-ocre-200 bg-ocre-50 p-4 text-sm text-ocre-700"
             >
                 <p className="font-medium">Asistente de IA</p>
-                <p className="mt-1 text-blue-800">No hay solicitudes pendientes para analizar.</p>
+                <p className="mt-1 text-ocre-700">No hay solicitudes pendientes para analizar.</p>
             </section>
         );
     }
 
     return (
-        <section aria-label="Asistente de IA" className="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+        <section aria-label="Asistente de IA" className="mb-6 rounded-xl border border-ocre-200 bg-ocre-50 p-4">
             <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium text-blue-900">Asistente de IA</p>
-                <Insignia tono="azul">Sugerencias</Insignia>
+                <p className="font-medium text-ocre-700">Asistente de IA</p>
+                <Insignia tono="ambar">Sugerencias</Insignia>
             </div>
-            <p className="mt-1 text-sm text-blue-800">
+            <p className="mt-1 text-sm text-ocre-700">
                 Elige una edición y el asistente resumirá sus solicitudes pendientes y sugerirá cuáles revisar primero.
                 Tú decides siempre.
             </p>
@@ -111,10 +111,10 @@ function AsistenteSolicitudes({ solicitudes, ediciones, ferias, lugares, onAnali
             <Alerta tipo="error" className="mt-3">{error}</Alerta>
 
             {analisis && (
-                <div className="mt-4 rounded-lg border border-blue-100 bg-white p-4">
+                <div className="mt-4 rounded-lg border border-ocre-200 bg-white p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <h4 className="font-semibold text-gray-900">Análisis del asistente</h4>
-                        <Insignia tono="azul">{nombreProveedor(analisis.proveedor)}</Insignia>
+                        <Insignia tono="ambar">{nombreProveedor(analisis.proveedor)}</Insignia>
                     </div>
 
                     <p className="mt-2 text-sm text-gray-700">{analisis.resumen}</p>

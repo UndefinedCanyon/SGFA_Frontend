@@ -2,7 +2,7 @@ function EstadoVacio({ titulo, descripcion, accion }) {
     return (
         <div className="flex flex-col items-center text-center py-10 px-4">
             <div
-                className="h-12 w-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center mb-3"
+                className="h-12 w-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mb-3"
                 aria-hidden="true"
             >
                 <svg

@@ -35,7 +35,7 @@ function Pestanas({ idBase, pestanas, activa, onCambiar }) {
         <div
             role="tablist"
             aria-label="Secciones del panel"
-            className="flex gap-1 overflow-x-auto shadow-[inset_0_-2px_0_0_#e5e7eb]"
+            className="flex gap-1 overflow-x-auto shadow-[inset_0_-2px_0_0_#e7dfd1]"
         >
             {pestanas.map((pestana, indice) => {
                 const seleccionada = pestana.id === activa;
@@ -56,7 +56,7 @@ function Pestanas({ idBase, pestanas, activa, onCambiar }) {
                         onKeyDown={(evento) => manejarTeclas(evento, indice)}
                         className={`inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                             seleccionada
-                                ? "border-green-600 text-green-700"
+                                ? "border-brand-600 text-brand-700"
                                 : "border-transparent text-gray-500 hover:text-gray-800"
                         }`}
                     >
@@ -64,7 +64,7 @@ function Pestanas({ idBase, pestanas, activa, onCambiar }) {
                         {pestana.contador !== undefined && (
                             <span
                                 className={`rounded-full px-2 py-0.5 text-xs transition-colors ${
-                                    seleccionada ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                                    seleccionada ? "bg-brand-100 text-brand-800" : "bg-gray-100 text-gray-600"
                                 }`}
                             >
                                 {pestana.contador}

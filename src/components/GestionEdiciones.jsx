@@ -194,7 +194,7 @@ function GestionEdiciones({ ferias, lugares, ediciones, ocupaciones, cargando, o
                     (puedeCrear ? (
                         <form
                             onSubmit={manejarCrear}
-                            className="mb-5 grid gap-4 rounded-xl border border-green-100 bg-green-50/50 p-4 sm:grid-cols-2"
+                            className="mb-5 grid gap-4 rounded-xl border border-brand-100 bg-brand-50/50 p-4 sm:grid-cols-2"
                         >
                             <Campo
                                 etiqueta="Feria"
@@ -391,7 +391,7 @@ function GestionEdiciones({ ferias, lugares, ediciones, ocupaciones, cargando, o
                                                 onChange={(e) => setCupoEditado(e.target.value)}
                                                 placeholder="Vacío = sin límite"
                                                 aria-label="Cupo máximo de artesanos"
-                                                className="w-48 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                className="w-48 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                             />
                                             <Boton type="submit" tamano="sm" cargando={guardandoCupo}>
                                                 Guardar cupo

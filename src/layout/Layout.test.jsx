@@ -90,7 +90,7 @@ describe("Layout: sesión expirada", () => {
 
         expect(screen.getByText(/Tu sesión expiró/)).toBeInTheDocument();
         const enlaces = screen.getAllByRole("link", { name: "Iniciar sesión" });
-        expect(enlaces.some((e) => e.className.includes("bg-green-600") && e.closest("main") === null)).toBe(true);
+        expect(enlaces.some((e) => e.className.includes("bg-brand-600") && e.closest("main") === null)).toBe(true);
     });
 
     it("en el propio login no repite el enlace al login dentro del aviso", () => {
