@@ -1,0 +1,89 @@
+name: E2E (Playwright)
+
+# Levanta todo el sistema real (base de datos, backend, frontend y Mailpit) con Docker Compose
+# y corre las pruebas de navegador. Es lento (varios minutos), por eso no corre en cada commit:
+#   - a mano desde la pestaña Actions ("Run workflow"),
+#   - y al subir cambios a preproduccion o main.
+# Requiere el secreto REPO_BACKEND_TOKEN (un token con permiso de lectura al repositorio del backend).
+on:
+  workflow_dispatch:
+  push:
+    branches: [preproduccion, main]
+
+jobs:
+  e2e:
+    name: Pruebas de extremo a extremo
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Descargar el frontend
+        uses: actions/checkout@v7
+        with:
+          path: frontend
+
+      - name: Descargar el backend
+        uses: actions/checkout@v7
+        with:
+          repository: UndefinedCanyon/SGFA_Backend
+          ref: ${{ github.ref_name == 'main' && 'main' || github.ref_name == 'preproduccion' && 'preproduccion' || 'desarrollo' }}
+          token: ${{ secrets.REPO_BACKEND_TOKEN }}
+          path: backend
+
+      - name: Configurar el entorno del sistema
+        working-directory: backend
+        run: |
+          cat > .env <<ENV
+          DB_PASSWORD=clave-solo-para-ci
+          JWT_SECRET=secreto-solo-para-ci-que-no-se-usa-en-produccion-0123456789
+          FRONTEND_PATH=../frontend
+          ASISTENTE_PROVEEDOR=falso
+          ENV
+
+      - name: Levantar el sistema con Docker Compose
+        working-directory: backend
+        run: docker compose up -d --build
+
+      - name: Esperar a que el backend y el frontend respondan
+        run: |
+          curl --silent --show-error --fail --retry 60 --retry-delay 3 --retry-connrefused --retry-all-errors http://localhost:8080/api/ferias
+          curl --silent --show-error --fail --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors http://localhost:5173
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: npm ci
+
+      - name: Instalar el navegador de Playwright
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Correr las pruebas E2E
+        working-directory: frontend
+        run: npx playwright test
+
+      - name: Guardar el informe de Playwright
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: informe-playwright
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Mostrar los registros del sistema si algo falló
+        if: failure()
+        working-directory: backend
+        run: docker compose logs --tail 200
+
+      - name: Apagar el sistema
+        if: always()
+        working-directory: backend
+        run: docker compose down
