@@ -8,8 +8,8 @@ test.describe("Administración", () => {
     });
 
     test("el panel muestra las estadísticas y las cuatro pestañas", async ({ page }) => {
-        await expect(page.getByText("Solicitudes pendientes")).toBeVisible();
-        await expect(page.getByText("Ferias activas")).toBeVisible();
+        await expect(page.getByText("Solicitudes pendientes", { exact: true })).toBeVisible();
+        await expect(page.getByText("Ferias activas", { exact: true })).toBeVisible();
 
         for (const nombre of ["Solicitudes", "Ferias y ediciones", "Artesanos", "Lugares"]) {
             await expect(page.getByRole("tab", { name: new RegExp(nombre) })).toBeVisible();
