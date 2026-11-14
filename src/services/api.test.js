@@ -196,6 +196,7 @@ describe("rutas, métodos y cuerpos de cada función", () => {
         ["consultarTodasLasSolicitudes", [T], "GET", "/inscripciones"],
         ["aprobarSolicitud", [8, T], "PUT", "/inscripciones/8/aprobar"],
         ["rechazarSolicitud", [8, T], "PUT", "/inscripciones/8/rechazar"],
+        ["analizarSolicitudesDeEdicion", [5, T], "POST", "/asistente/solicitudes/analisis", { idEdicionFeria: 5 }],
         ["consultarMiPerfil", [T], "GET", "/artesanos/perfil"],
         ["actualizarMiPerfil", [{ p: 1 }, T], "PUT", "/artesanos/perfil", { p: 1 }],
         ["consultarMisProductos", [T], "GET", "/productos"],

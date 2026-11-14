@@ -5,6 +5,8 @@ import { formatearFechaCorta } from "../utils/helpers";
 import {
     Alerta, Boton, ConfirmarDialogo, EstadoVacio, Esqueleto, Insignia, Tarjeta,
 } from "./ui";
+import AsistenteSolicitudes from "./AsistenteSolicitudes";
+import { PRIORIDADES } from "../utils/prioridades";
 
 const ESTADOS = {
     PENDIENTE: { texto: "Pendiente", tono: "ambar" },
@@ -13,6 +15,13 @@ const ESTADOS = {
 };
 
 const RANGO = { PENDIENTE: 0, APROBADA: 1, RECHAZADA: 2 };
+
+const ORDEN_PRIORIDAD = { ALTA: 0, MEDIA: 1, BAJA: 2 };
+
+// Las solicitudes sin sugerencia (de otras ediciones) van después de las que sí la tienen.
+function RANGO_PRIORIDAD(sugerencia) {
+    return sugerencia ? ORDEN_PRIORIDAD[sugerencia.prioridad] ?? 1 : 3;
+}
 
 const FILTROS = [
     { valor: "PENDIENTE", texto: "Pendientes" },
@@ -31,6 +40,14 @@ function GestionSolicitudes({
     const [error, setError] = useState(null);
     const [mensaje, setMensaje] = useState(null);
     const [aRechazar, setARechazar] = useState(null);
+    const [analisis, setAnalisis] = useState(null);
+    const [ordenarPorIA, setOrdenarPorIA] = useState(false);
+
+    const sugerencias = {};
+    (analisis?.sugerencias ?? []).forEach((sugerencia) => {
+        sugerencias[sugerencia.idInscripcion] = sugerencia;
+    });
+    const hayOrdenIA = Boolean(analisis) && filtro === "PENDIENTE" && analisis.sugerencias.length > 0;
 
     function conteo(valor) {
         return valor === "TODAS"
@@ -93,6 +110,10 @@ function GestionSolicitudes({
         .filter((s) => filtro === "TODAS" || s.estado === filtro)
         .sort((a, b) => {
             if (filtro === "PENDIENTE") {
+                if (ordenarPorIA && hayOrdenIA) {
+                    const dif = RANGO_PRIORIDAD(sugerencias[a.id]) - RANGO_PRIORIDAD(sugerencias[b.id]);
+                    if (dif !== 0) return dif;
+                }
                 return a.fechaInscripcion.localeCompare(b.fechaInscripcion) || a.id - b.id;
             }
             if (filtro === "TODAS" && RANGO[a.estado] !== RANGO[b.estado]) {
@@ -120,6 +141,17 @@ function GestionSolicitudes({
                 titulo="Solicitudes de participación"
                 descripcion="Revisa quién quiere participar en cada edición. Las pendientes aparecen en orden de llegada."
             >
+                <AsistenteSolicitudes
+                    solicitudes={solicitudes}
+                    ediciones={ediciones}
+                    ferias={ferias}
+                    lugares={lugares}
+                    onAnalisis={(resultado) => {
+                        setAnalisis(resultado);
+                        setOrdenarPorIA(false);
+                    }}
+                />
+
                 <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Filtrar solicitudes">
                     {FILTROS.map((f) => (
                         <button
@@ -137,6 +169,18 @@ function GestionSolicitudes({
                         </button>
                     ))}
                 </div>
+
+                {hayOrdenIA && (
+                    <label className="mb-4 flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={ordenarPorIA}
+                            onChange={(e) => setOrdenarPorIA(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        />
+                        Ordenar por la prioridad que sugiere el asistente
+                    </label>
+                )}
 
                 <Alerta tipo="error" className="mb-4">{error}</Alerta>
                 <Alerta tipo="exito" className="mb-4">{mensaje}</Alerta>
@@ -200,6 +244,18 @@ function GestionSolicitudes({
                                             <p className="mt-1 text-xs text-gray-400">
                                                 Solicitada el {formatearFechaCorta(solicitud.fechaInscripcion)}
                                             </p>
+
+                                            {solicitud.estado === "PENDIENTE" && sugerencias[solicitud.id] && (
+                                                <div className="mt-3 flex flex-wrap items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
+                                                    <Insignia tono={PRIORIDADES[sugerencias[solicitud.id].prioridad]?.tono ?? "gris"}>
+                                                        {PRIORIDADES[sugerencias[solicitud.id].prioridad]?.texto ?? "Prioridad media"}
+                                                    </Insignia>
+                                                    <p className="min-w-0 flex-1 text-sm text-blue-900">
+                                                        <span className="font-medium">Sugerencia del asistente:</span>{" "}
+                                                        {sugerencias[solicitud.id].motivo}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="flex flex-col items-start gap-2 sm:items-end">

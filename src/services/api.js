@@ -171,6 +171,11 @@ export function rechazarSolicitud(idInscripcion, token) {
     return solicitar(`/inscripciones/${idInscripcion}/rechazar`, { metodo: "PUT", token });
 }
 
+// ---------- Asistente de IA (administrador) ----------
+export function analizarSolicitudesDeEdicion(idEdicionFeria, token) {
+    return solicitar("/asistente/solicitudes/analisis", { metodo: "POST", cuerpo: { idEdicionFeria }, token });
+}
+
 // ---------- Artesano ----------
 export function consultarMiPerfil(token) {
     return solicitar("/artesanos/perfil", { token });

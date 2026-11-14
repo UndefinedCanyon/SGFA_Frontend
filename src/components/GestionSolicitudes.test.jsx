@@ -4,6 +4,16 @@ import { instalarDialogo } from "../test/dialogo";
 
 vi.mock("../services/api", () => ({ aprobarSolicitud: vi.fn(), rechazarSolicitud: vi.fn() }));
 vi.mock("../context/AuthContext", () => ({ useAuth: vi.fn() }));
+// El asistente se prueba aparte; aquí un doble permite entregar un análisis a la lista.
+let analisisParaEntregar = null;
+vi.mock("./AsistenteSolicitudes", () => ({
+    default: ({ onAnalisis }) => (
+        <div>
+            <button onClick={() => onAnalisis(analisisParaEntregar)}>mock-analizar</button>
+            <button onClick={() => onAnalisis(null)}>mock-cerrar</button>
+        </div>
+    ),
+}));
 
 import GestionSolicitudes from "./GestionSolicitudes";
 import { aprobarSolicitud, rechazarSolicitud } from "../services/api";
@@ -30,6 +40,7 @@ let onCambio;
 beforeEach(() => {
     vi.clearAllMocks();
     instalarDialogo();
+    analisisParaEntregar = null;
     onCambio = vi.fn().mockResolvedValue(undefined);
     useAuth.mockReturnValue({ usuario: { token: "tok" } });
     aprobarSolicitud.mockResolvedValue(undefined);
@@ -235,5 +246,126 @@ describe("GestionSolicitudes: cupos", () => {
         montar([pendiente], { ocupaciones: { 10: { cupoMaximo: null, aprobados: 4, disponibles: null } } });
 
         expect(screen.queryByText(/^Cupo:/)).not.toBeInTheDocument();
+    });
+});
+
+
+describe("GestionSolicitudes: sugerencias del asistente", () => {
+    const analisis = (sugerencias) => ({
+        idEdicionFeria: 10, resumen: "r", cuposDisponibles: 2, totalPendientes: 2, analizadas: 2,
+        proveedor: "Gemini", sugerencias,
+    });
+    const alta = { idInscripcion: 101, prioridad: "ALTA", motivo: "Catálogo completo y descripción clara" };
+    const baja = { idInscripcion: 100, prioridad: "BAJA", motivo: "Sin productos registrados" };
+
+    function entregar(a) {
+        analisisParaEntregar = a;
+        fireEvent.click(screen.getByText("mock-analizar"));
+    }
+
+    const tarjetas = () => screen.getAllByRole("article");
+
+    it("sin análisis no muestra sugerencias ni la opción de ordenar", () => {
+        montar([pendiente, pendiente2]);
+
+        expect(screen.queryByText(/Sugerencia del asistente/)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/Ordenar por la prioridad/)).not.toBeInTheDocument();
+    });
+
+    it("muestra la prioridad y el motivo en cada solicitud pendiente analizada", () => {
+        montar([pendiente, pendiente2]);
+
+        entregar(analisis([alta, baja]));
+
+        expect(screen.getByText("Prioridad alta")).toBeInTheDocument();
+        expect(screen.getByText("Prioridad baja")).toBeInTheDocument();
+        expect(screen.getByText("Catálogo completo y descripción clara")).toBeInTheDocument();
+        expect(screen.getByText("Sin productos registrados")).toBeInTheDocument();
+        expect(screen.getAllByText("Sugerencia del asistente:")).toHaveLength(2);
+    });
+
+    it("una prioridad desconocida se muestra como media", () => {
+        montar([pendiente]);
+
+        entregar(analisis([{ idInscripcion: 100, prioridad: "RARA", motivo: "x" }]));
+
+        expect(screen.getByText("Prioridad media")).toBeInTheDocument();
+    });
+
+    it("solo las solicitudes pendientes llevan sugerencia", () => {
+        montar([pendiente, aprobada]);
+
+        entregar(analisis([baja, { idInscripcion: 102, prioridad: "ALTA", motivo: "no debería verse" }]));
+        fireEvent.click(filtro("Aprobadas"));
+
+        expect(screen.queryByText("no debería verse")).not.toBeInTheDocument();
+    });
+
+    it("las solicitudes sin sugerencia no muestran nada", () => {
+        montar([pendiente, pendiente2]);
+
+        entregar(analisis([alta]));
+
+        expect(screen.getAllByText("Sugerencia del asistente:")).toHaveLength(1);
+    });
+
+    it("ofrece ordenar por prioridad y lo hace, dejando al final las que no tienen sugerencia", () => {
+        const otra = { id: 104, idArtesano: 1, idEdicionFeria: 11, fechaInscripcion: "2026-10-01", estado: "PENDIENTE" };
+        montar([pendiente, pendiente2, otra]);
+        // Por llegada: otra (10-01), pendiente2 (11-01), pendiente (11-02)
+        entregar(analisis([alta, baja]));
+        expect(tarjetas()[0]).toHaveTextContent("Cerámicas Ana");
+
+        fireEvent.click(screen.getByLabelText(/Ordenar por la prioridad/));
+
+        // Por prioridad: pendiente2 (ALTA), pendiente (BAJA), otra (sin sugerencia)
+        expect(tarjetas()[0]).toHaveTextContent("Telares Luis");
+        expect(tarjetas()[1]).toHaveTextContent("Prioridad baja");
+        expect(tarjetas()[2]).not.toHaveTextContent("Sugerencia del asistente");
+    });
+
+    it("dentro de la misma prioridad se mantiene el orden de llegada", () => {
+        montar([pendiente, pendiente2]);
+        entregar(analisis([
+            { idInscripcion: 100, prioridad: "MEDIA", motivo: "a" },
+            { idInscripcion: 101, prioridad: "MEDIA", motivo: "b" },
+        ]));
+
+        fireEvent.click(screen.getByLabelText(/Ordenar por la prioridad/));
+
+        expect(tarjetas()[0]).toHaveTextContent("Telares Luis");
+    });
+
+    it("la opción de ordenar solo aparece en el filtro Pendientes y si hay sugerencias", () => {
+        montar([pendiente, aprobada]);
+        entregar(analisis([]));
+        expect(screen.queryByLabelText(/Ordenar por la prioridad/)).not.toBeInTheDocument();
+
+        entregar(analisis([baja]));
+        expect(screen.getByLabelText(/Ordenar por la prioridad/)).toBeInTheDocument();
+
+        fireEvent.click(filtro("Aprobadas"));
+        expect(screen.queryByLabelText(/Ordenar por la prioridad/)).not.toBeInTheDocument();
+    });
+
+    it("al cerrar el análisis desaparecen las sugerencias y el orden vuelve al normal", () => {
+        montar([pendiente, pendiente2]);
+        entregar(analisis([alta, baja]));
+        fireEvent.click(screen.getByLabelText(/Ordenar por la prioridad/));
+
+        fireEvent.click(screen.getByText("mock-cerrar"));
+
+        expect(screen.queryByText(/Sugerencia del asistente/)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/Ordenar por la prioridad/)).not.toBeInTheDocument();
+    });
+
+    it("un análisis nuevo reinicia la casilla de ordenar", () => {
+        montar([pendiente, pendiente2]);
+        entregar(analisis([alta, baja]));
+        fireEvent.click(screen.getByLabelText(/Ordenar por la prioridad/));
+
+        entregar(analisis([alta, baja]));
+
+        expect(screen.getByLabelText(/Ordenar por la prioridad/)).not.toBeChecked();
     });
 });
