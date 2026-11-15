@@ -26,16 +26,21 @@ function Bienvenida({ nombre, rol, onCerrar }) {
     }, [onCerrar]);
 
     return (
-        <div
-            className="fondo-bienvenida fixed inset-0 z-50 flex items-center justify-center bg-gray-900/45 px-4 backdrop-blur-[2px]"
-            onClick={onCerrar}
-            data-testid="bienvenida-fondo"
-        >
+        <div className="fondo-bienvenida fixed inset-0 z-50 flex items-center justify-center bg-gray-900/45 px-4 backdrop-blur-[2px]">
+            {/* Fondo que cierra la ventana al tocarlo. Es un botón real (no un div con clic) y queda
+                fuera del orden del teclado: con teclado se cierra con Escape o con "Continuar". */}
+            <button
+                type="button"
+                tabIndex={-1}
+                aria-label="Cerrar la bienvenida"
+                onClick={onCerrar}
+                data-testid="bienvenida-fondo"
+                className="absolute inset-0 h-full w-full cursor-default"
+            />
             <div
                 role="status"
                 aria-live="polite"
                 aria-labelledby="titulo-bienvenida"
-                onClick={(evento) => evento.stopPropagation()}
                 className="bienvenida relative w-full max-w-sm overflow-hidden rounded-3xl bg-white p-8 text-center shadow-2xl"
             >
                 <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-bosque-100 text-bosque-600">
